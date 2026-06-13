@@ -1,0 +1,1536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pump and Dump — A Trading Scheme Simulator</title>
+<meta name="description" content="A satirical simulator where you coordinate pump-and-dump schemes. Buy low, convince the world, sell high. Don't get arrested.">
+<meta property="og:title" content="Pump and Dump — Trading Scheme Simulator">
+<meta property="og:description" content="Buy. Tweet. Dump. Profit. (Don't get arrested.)">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+<style>
+:root{
+  --bg:#0a0e17;
+  --bg-2:#11182a;
+  --bg-3:#1a2238;
+  --panel:#161e30;
+  --panel-2:#1d2640;
+  --border:#2a3450;
+  --text:#e8eaf0;
+  --text-dim:#8a93ab;
+  --text-mute:#5a637a;
+  --green:#00d084;
+  --green-2:#00a368;
+  --red:#ff4d6d;
+  --red-2:#c8324a;
+  --gold:#ffc857;
+  --gold-2:#d99e2a;
+  --blue:#3aa0ff;
+  --purple:#a06cff;
+  --orange:#ff8c42;
+  --shadow:0 4px 14px rgba(0,0,0,.4);
+  --shadow-lg:0 8px 30px rgba(0,0,0,.5);
+  --radius:10px;
+  --radius-sm:6px;
+  --font-mono:'SF Mono','Monaco','Consolas',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  line-height:1.5;
+  overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse at top left, rgba(58,160,255,.06), transparent 50%),
+    radial-gradient(ellipse at bottom right, rgba(160,108,255,.06), transparent 50%);
+  background-attachment:fixed;
+}
+
+.app{
+  max-width:1200px;
+  margin:0 auto;
+  padding:16px;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+}
+header.topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:12px 18px;
+  background:linear-gradient(135deg,var(--bg-2),var(--bg-3));
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  margin-bottom:14px;
+  box-shadow:var(--shadow);
+}
+.brand{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-weight:700;
+  font-size:18px;
+}
+.brand .logo{
+  font-size:22px;
+  filter:drop-shadow(0 0 8px rgba(255,200,87,.5));
+}
+.brand .title{color:var(--gold)}
+.hud{
+  display:flex;
+  gap:18px;
+  align-items:center;
+  font-size:13px;
+  flex-wrap:wrap;
+}
+.hud .stat{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  line-height:1.15;
+}
+.hud .stat .label{
+  color:var(--text-mute);
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+}
+.hud .stat .value{
+  font-family:var(--font-mono);
+  font-weight:700;
+  font-size:16px;
+}
+.hud .value.money{color:var(--green)}
+.hud .value.level{color:var(--gold)}
+.hud .value.danger{color:var(--red)}
+
+main{
+  display:grid;
+  grid-template-columns:1fr 360px;
+  gap:14px;
+  flex:1;
+  min-height:0;
+}
+@media (max-width:880px){
+  main{grid-template-columns:1fr}
+}
+
+.stage{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+  display:flex;
+  flex-direction:column;
+  min-height:520px;
+}
+.sidebar{
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  min-height:0;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:var(--shadow);
+}
+.card h3{
+  font-size:13px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--text-dim);
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+
+.ticker{
+  background:#000;
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:8px 0;
+  overflow:hidden;
+  margin-bottom:14px;
+  position:relative;
+}
+.ticker-inner{
+  display:inline-block;
+  white-space:nowrap;
+  padding-left:100%;
+  animation:ticker 50s linear infinite;
+  font-family:var(--font-mono);
+  font-size:13px;
+}
+.ticker .pos{color:var(--green)}
+.ticker .neg{color:var(--red)}
+.ticker .neu{color:var(--text-dim)}
+@keyframes ticker{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}
+
+.chart-wrap{
+  background:#000;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px;
+  position:relative;
+  min-height:240px;
+}
+.chart-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  margin-bottom:6px;
+}
+.chart-symbol{font-family:var(--font-mono);font-weight:700;font-size:18px;color:var(--gold)}
+.chart-price{font-family:var(--font-mono);font-size:24px;font-weight:700}
+.chart-price.up{color:var(--green)}
+.chart-price.down{color:var(--red)}
+.chart-change{font-family:var(--font-mono);font-size:13px;margin-left:8px}
+#priceChart{display:block;width:100%;height:200px}
+.chart-meta{
+  display:flex;
+  gap:14px;
+  margin-top:6px;
+  font-size:11px;
+  color:var(--text-mute);
+  font-family:var(--font-mono);
+}
+
+.actions{
+  margin-top:14px;
+  display:grid;
+  grid-template-columns:repeat(3, 1fr);
+  gap:10px;
+}
+.btn{
+  font-family:inherit;
+  font-size:14px;
+  font-weight:600;
+  padding:11px 14px;
+  border-radius:var(--radius-sm);
+  border:1px solid var(--border);
+  background:var(--bg-3);
+  color:var(--text);
+  cursor:pointer;
+  transition:all .15s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+}
+.btn:hover:not(:disabled){
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,0,0,.3);
+}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.buy{background:linear-gradient(135deg,var(--green),var(--green-2));border-color:var(--green-2);color:#04241a}
+.btn.sell{background:linear-gradient(135deg,var(--red),var(--red-2));border-color:var(--red-2);color:#fff}
+.btn.boost{background:linear-gradient(135deg,var(--blue),#1f6fc0);border-color:#1f6fc0;color:#fff}
+.btn.warn{background:linear-gradient(135deg,var(--orange),#cc6a26);border-color:#cc6a26;color:#fff}
+.btn.purple{background:linear-gradient(135deg,var(--purple),#7444cc);border-color:#7444cc;color:#fff}
+.btn.gold{background:linear-gradient(135deg,var(--gold),var(--gold-2));border-color:var(--gold-2);color:#1f1500}
+.btn.ghost{background:transparent;border-color:var(--border);color:var(--text-dim)}
+.btn.danger{background:transparent;border-color:var(--red);color:var(--red)}
+.btn-row{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-row .btn{flex:1;min-width:120px}
+
+.timer-wrap{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  margin:10px 0;
+}
+.timer{
+  flex:1;
+  height:8px;
+  background:var(--bg-3);
+  border-radius:4px;
+  overflow:hidden;
+  position:relative;
+}
+.timer-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--green),var(--gold));
+  transition:width .3s linear;
+}
+.timer-fill.danger{background:linear-gradient(90deg,var(--red),var(--orange))}
+.timer-label{
+  font-family:var(--font-mono);
+  font-size:13px;
+  color:var(--text-dim);
+  min-width:60px;
+  text-align:right;
+}
+.phase-badge{
+  display:inline-block;
+  padding:3px 10px;
+  border-radius:99px;
+  font-size:11px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.06em;
+  background:var(--bg-3);
+  color:var(--text-dim);
+}
+.phase-badge.buy{background:rgba(0,208,132,.15);color:var(--green)}
+.phase-badge.pump{background:rgba(58,160,255,.15);color:var(--blue)}
+.phase-badge.dump{background:rgba(255,77,109,.15);color:var(--red)}
+.phase-badge.end{background:rgba(255,200,87,.15);color:var(--gold)}
+
+.composer{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px;
+  margin-top:10px;
+}
+.composer textarea{
+  width:100%;
+  min-height:64px;
+  background:transparent;
+  border:none;
+  color:var(--text);
+  font-family:inherit;
+  font-size:14px;
+  resize:vertical;
+  outline:none;
+}
+.composer .composer-footer{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:8px;
+  font-size:12px;
+  color:var(--text-mute);
+  gap:10px;
+  flex-wrap:wrap;
+}
+.composer .post-stats{
+  display:flex;
+  gap:14px;
+  font-family:var(--font-mono);
+  font-size:11px;
+}
+.composer .post-stats .good{color:var(--green)}
+.composer .post-stats .bad{color:var(--red)}
+.composer .post-stats .neu{color:var(--text-dim)}
+
+.feed{
+  max-height:280px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  padding-right:4px;
+}
+.feed::-webkit-scrollbar{width:6px}
+.feed::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.tweet{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px 12px;
+  font-size:13px;
+  border-left:3px solid var(--blue);
+  animation:slideIn .3s ease;
+}
+@keyframes slideIn{from{opacity:0;transform:translateX(-6px)}to{opacity:1;transform:translateX(0)}}
+.tweet.you{border-left-color:var(--gold)}
+.tweet.influencer{border-left-color:var(--purple)}
+.tweet.alert{border-left-color:var(--red);background:rgba(255,77,109,.08)}
+.tweet.good{border-left-color:var(--green);background:rgba(0,208,132,.05)}
+.tweet .meta{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  margin-bottom:4px;
+  font-size:11px;
+  color:var(--text-mute);
+  flex-wrap:wrap;
+}
+.tweet .handle{font-weight:700;color:var(--text-dim)}
+.tweet.influencer .handle{color:var(--purple)}
+.tweet.you .handle{color:var(--gold)}
+.tweet .body{color:var(--text);line-height:1.45}
+.tweet .impact{
+  display:inline-block;
+  font-family:var(--font-mono);
+  font-size:11px;
+  margin-left:6px;
+  padding:1px 6px;
+  border-radius:3px;
+}
+.tweet .impact.up{background:rgba(0,208,132,.15);color:var(--green)}
+.tweet .impact.down{background:rgba(255,77,109,.15);color:var(--red)}
+
+.assets{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-top:6px;
+}
+.asset{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.asset:hover{border-color:var(--gold);background:var(--panel-2)}
+.asset .ticker{background:none;border:none;padding:0;margin:0;font-family:var(--font-mono);font-weight:700;color:var(--gold);font-size:14px;animation:none;display:block;white-space:normal}
+.asset .name{font-size:11px;color:var(--text-mute);margin-top:2px}
+.asset .meta{font-size:11px;color:var(--text-dim);margin-top:4px;font-family:var(--font-mono)}
+
+.influencer{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+.influencer:last-child{border-bottom:none}
+.influencer .avatar{
+  width:32px;height:32px;
+  border-radius:50%;
+  background:var(--bg-3);
+  display:flex;align-items:center;justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+}
+.influencer .info{flex:1;min-width:0}
+.influencer .name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.influencer .followers{font-size:11px;color:var(--text-mute);font-family:var(--font-mono)}
+.influencer .cost{font-family:var(--font-mono);font-size:12px;color:var(--gold);font-weight:700}
+.influencer .status{font-size:10px;padding:2px 6px;border-radius:3px;background:var(--bg-3);color:var(--text-dim)}
+.influencer .status.hired{background:rgba(0,208,132,.15);color:var(--green)}
+.influencer .status.cool{background:rgba(255,140,66,.15);color:var(--orange)}
+
+.modal-bg{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.75);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index:1000;
+  padding:20px;
+  backdrop-filter:blur(4px);
+}
+.modal-bg.active{display:flex}
+.modal{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+  max-width:540px;
+  width:100%;
+  max-height:90vh;
+  overflow-y:auto;
+  box-shadow:var(--shadow-lg);
+}
+.modal h2{margin-bottom:12px;font-size:22px}
+.modal h3{font-size:15px;margin:14px 0 8px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em}
+.modal p{color:var(--text-dim);margin-bottom:10px;line-height:1.6}
+.modal ul{margin-left:20px;margin-bottom:12px;color:var(--text-dim);line-height:1.7}
+.modal ul li{margin-bottom:4px}
+.modal .btn{margin-top:10px}
+.modal .end-stats{
+  background:var(--bg-2);
+  border-radius:var(--radius-sm);
+  padding:14px;
+  margin:14px 0;
+}
+.modal .end-stats .row{
+  display:flex;justify-content:space-between;
+  padding:4px 0;
+  font-family:var(--font-mono);
+}
+.modal .end-stats .row .l{color:var(--text-mute)}
+.modal .end-stats .row .v.g{color:var(--green)}
+.modal .end-stats .row .v.r{color:var(--red)}
+.modal .end-stats .row .v.c{color:var(--gold)}
+
+.intro{
+  text-align:center;
+  padding:30px 10px;
+}
+.intro h1{
+  font-size:38px;
+  background:linear-gradient(135deg,var(--gold),var(--orange));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:8px;
+  letter-spacing:-.02em;
+}
+.intro .tagline{color:var(--text-dim);font-size:16px;margin-bottom:24px}
+.intro .badges{
+  display:flex;gap:10px;justify-content:center;flex-wrap:wrap;
+  margin-bottom:20px;
+}
+.intro .badge{
+  background:var(--bg-3);
+  border:1px solid var(--border);
+  border-radius:99px;
+  padding:5px 12px;
+  font-size:12px;
+  color:var(--text-dim);
+}
+.intro .legal{
+  font-size:11px;
+  color:var(--text-mute);
+  margin-top:18px;
+  font-style:italic;
+}
+.intro .name-input{
+  background:var(--bg-2);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  color:var(--text);
+  font-size:14px;
+  font-family:inherit;
+  width:240px;
+  text-align:center;
+  margin-bottom:14px;
+  outline:none;
+}
+.intro .name-input:focus{border-color:var(--gold)}
+
+.gameover h2{color:var(--red)}
+.gameover.victory h2{color:var(--gold)}
+
+.pill{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:99px;
+  font-size:10px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  background:var(--bg-3);
+  color:var(--text-dim);
+}
+.pill.bull{background:rgba(0,208,132,.15);color:var(--green)}
+.pill.bear{background:rgba(255,77,109,.15);color:var(--red)}
+.pill.hot{background:rgba(255,200,87,.15);color:var(--gold)}
+
+.mute{color:var(--text-mute)}
+.dim{color:var(--text-dim)}
+.mono{font-family:var(--font-mono)}
+.right{text-align:right}
+.center{text-align:center}
+.bold{font-weight:700}
+.scroll{overflow-y:auto;max-height:280px}
+.scroll::-webkit-scrollbar{width:6px}
+.scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+</style>
+</head>
+<body>
+
+<div class="app">
+
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">📈</span>
+    <span class="title">Pump &amp; Dump</span>
+  </div>
+  <div class="hud" id="hud" style="display:none">
+    <div class="stat"><span class="label">Cash</span><span class="value money" id="hudCash">$0</span></div>
+    <div class="stat"><span class="label">Net Worth</span><span class="value" id="hudNet">$0</span></div>
+    <div class="stat"><span class="label">Level</span><span class="value level" id="hudLevel">1 / 5</span></div>
+    <div class="stat"><span class="label">Heat</span><span class="value danger" id="hudHeat">0%</span></div>
+  </div>
+</header>
+
+<div id="intro" class="stage intro">
+  <h1>📈 Pump &amp; Dump</h1>
+  <p class="tagline">A satirical trading-scheme simulator. Buy. Tweet. Dump. Profit.<br><span class="mute">(Try not to get arrested.)</span></p>
+  <div class="badges">
+    <span class="badge">🎮 5 Levels</span>
+    <span class="badge">📊 Real-Time Chart</span>
+    <span class="badge">🐦 X-Style Posts</span>
+    <span class="badge">⚠️ Real Risk</span>
+    <span class="badge">🏦 De-Banked</span>
+  </div>
+  <div>
+    <input id="playerName" class="name-input" placeholder="Your @handle" maxlength="20" value="@trader">
+  </div>
+  <div>
+    <button class="btn gold" onclick="startGame()">Start Scheme →</button>
+  </div>
+  <h3 style="margin-top:30px;color:var(--text-dim);font-size:13px;letter-spacing:.08em;text-transform:uppercase">How it works</h3>
+  <p class="dim" style="text-align:left;max-width:520px;margin:8px auto">
+    Each level you pick a target — penny stocks, meme coins, mid-caps, blue chips.
+    Buy the underlying, then convince the world to FOMO in via X posts and influencers.
+    Time the dump. Profit unlocks the next tier. Lose it all? <span style="color:var(--red)">Bankrupt.</span>
+  </p>
+  <ul style="text-align:left;max-width:520px;margin:8px auto;font-size:13px">
+    <li><b>Buy</b> the asset when the price is low.</li>
+    <li><b>Pump</b> — write posts, hire influencers, buy ads. Heat builds.</li>
+    <li><b>Hold</b> too long and the chart dumps on you. <b>Sell</b> at the top.</li>
+    <li><b>Risk</b> — too much heat and the SEC, your bank, or a margin call ends your run.</li>
+  </ul>
+  <p class="legal">For entertainment only. No real securities are harmed. Don't try this at home, kids. Or do. We're not your parents.</p>
+</div>
+
+<div id="game" class="stage" style="display:none">
+  <div class="ticker"><div class="ticker-inner" id="ticker"></div></div>
+
+  <div class="card">
+    <div class="row spread" style="flex-wrap:wrap;gap:6px">
+      <div>
+        <span class="phase-badge" id="phaseBadge">CHOOSE</span>
+        <span class="chart-symbol" id="targetName">$TGT</span>
+        <span class="mute" id="targetDesc">— penny stock</span>
+      </div>
+      <div>
+        <span class="chart-price" id="priceDisplay">$0.00</span>
+        <span class="chart-change" id="priceChange">$0.00 (0.0%)</span>
+      </div>
+    </div>
+    <div class="chart-wrap" style="margin-top:10px">
+      <canvas id="priceChart" height="200"></canvas>
+      <div class="chart-meta">
+        <span>Vol: <span id="vol">0</span></span>
+        <span>Mkt: <span id="mcap">$0</span></span>
+        <span>Hype: <span id="hype">0</span></span>
+        <span class="right" id="status">BULLISH 🚀</span>
+      </div>
+    </div>
+    <div class="timer-wrap">
+      <span class="timer-label" id="timerLabel">—</span>
+      <div class="timer"><div class="timer-fill" id="timerFill" style="width:0%"></div></div>
+    </div>
+
+    <div class="actions" id="actionGrid"></div>
+
+    <div id="composerWrap" class="composer" style="display:none">
+      <textarea id="tweetBox" placeholder="Make the case. Convince the timeline."></textarea>
+      <div class="composer-footer">
+        <span id="charCount">0 / 280</span>
+        <div class="post-stats">
+          <span class="neu">Reach: <span id="reach">0</span></span>
+          <span class="good">Conv: <span id="conv">0</span></span>
+          <span class="bad">Heat: <span id="heatDelta">+0</span></span>
+        </div>
+        <button class="btn boost" onclick="postTweet()" id="postBtn">Post</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<aside class="sidebar" id="sidebar" style="display:none">
+
+  <div class="card">
+    <h3>📊 Position</h3>
+    <div class="row spread" style="font-size:13px">
+      <span class="dim">Shares</span>
+      <span class="mono bold" id="shares">0</span>
+    </div>
+    <div class="row spread" style="font-size:13px;margin-top:4px">
+      <span class="dim">Avg cost</span>
+      <span class="mono" id="avgCost">—</span>
+    </div>
+    <div class="row spread" style="font-size:13px;margin-top:4px">
+      <span class="dim">Position value</span>
+      <span class="mono bold" id="posValue">$0</span>
+    </div>
+    <div class="row spread" style="font-size:13px;margin-top:4px">
+      <span class="dim">P&amp;L</span>
+      <span class="mono bold" id="pnl">$0</span>
+    </div>
+  </div>
+
+  <div class="card" id="assetsCard">
+    <h3>🎯 Target</h3>
+    <div class="assets" id="assetsList"></div>
+  </div>
+
+  <div class="card">
+    <h3>👥 Influencers</h3>
+    <div id="influencerList"></div>
+  </div>
+
+  <div class="card" style="flex:1;min-height:200px;display:flex;flex-direction:column">
+    <h3>📰 Live Feed</h3>
+    <div id="feed" class="feed"></div>
+  </div>
+
+</aside>
+
+</div>
+
+<div id="modal" class="modal-bg">
+  <div class="modal" id="modalInner">
+  </div>
+</div>
+
+<script>
+// ============================================================
+//  PUMP AND DUMP — Game Engine
+// ============================================================
+
+const LEVELS = [
+  {
+    id:1, name:"Penny Stocks", emoji:"🪙",
+    desc:"Wild West. Sub-penny illiquid shells.",
+    cash:1000,
+    assets:[
+      {tk:"$FRGE",nm:"Forge NanoTech Inc.",cap:0.4,vol:0.18,start:0.03,spike:2.0,desc:"AI-quantum battery rumor mill"},
+      {tk:"$BIOQ",nm:"BioQuest Oncology",cap:1.1,vol:0.16,start:0.12,spike:1.7,desc:"FDA whisper. Probably nothing."},
+      {tk:"$DUCK",nm:"DuckCoin",cap:0.3,vol:0.22,start:0.001,spike:2.5,desc:"Meme-tier. Quack energy."}
+    ],
+    targetProfit:0.5,
+    durationSec:75,
+    maxHeat:80,
+    riskNotes:"Low liquidity — prices are easy to move, but spreads eat your edge.",
+    influencers:[
+      {name:"@pennystockpete",followers:"120K",emoji:"🤡",cost:120,reach:1.0,conv:0.6,heat:6},
+      {name:"@otcqueen",followers:"85K",emoji:"👑",cost:80,reach:0.8,conv:0.7,heat:4},
+      {name:"@nasdaq_ninja",followers:"200K",emoji:"🥷",cost:220,reach:1.4,conv:0.4,heat:8}
+    ]
+  },
+  {
+    id:2, name:"Meme Coins", emoji:"🐕",
+    desc:"Crypto Twitter runs the show.",
+    cash:3000,
+    assets:[
+      {tk:"$WOJAK",nm:"WojakCoin",cap:8,vol:0.25,start:0.0008,spike:3.0,desc:"Mascot: a sad wojak. Aims: the moon."},
+      {tk:"$PEPE2",nm:"Pepe2.0",cap:5,vol:0.30,start:0.001,spike:2.7,desc:"It's the sequel. The original is dead."},
+      {tk:"$DOGEX",nm:"DogeX",cap:12,vol:0.22,start:0.005,spike:2.2,desc:"Endorsed by a guy with 8 followers."}
+    ],
+    targetProfit:0.5,
+    durationSec:80,
+    maxHeat:75,
+    riskNotes:"Smarter money is watching. Memes are sticky — but dumps come fast.",
+    influencers:[
+      {name:"@cryptowhale",followers:"500K",emoji:"🐳",cost:600,reach:2.0,conv:0.5,heat:10},
+      {name:"@memelord42",followers:"1.2M",emoji:"😂",cost:1200,reach:2.6,conv:0.4,heat:14},
+      {name:"@defi_dad",followers:"220K",emoji:"👨\u200d💼",cost:380,reach:1.4,conv:0.7,heat:7}
+    ]
+  },
+  {
+    id:3, name:"Small-Cap Biotech", emoji:"🧬",
+    desc:"Press releases move the needle.",
+    cash:8000,
+    assets:[
+      {tk:"$CURE",nm:"CuraGen Bio",cap:85,vol:0.15,start:2.40,spike:1.4,desc:"Phase II readout. Very binary."},
+      {tk:"$GLIO",nm:"GlioGenesis",cap:62,vol:0.18,start:1.85,spike:1.5,desc:"Brain cancer is undefeated marketing."},
+      {tk:"$NOVR",nm:"NovaRNA",cap:120,vol:0.14,start:4.10,spike:1.3,desc:"mRNA platform. Moderna-but-poorer."}
+    ],
+    targetProfit:0.4,
+    durationSec:90,
+    maxHeat:65,
+    riskNotes:"More eyes on the tape. Retail is woke. Real risk of an SEC tweet.",
+    influencers:[
+      {name:"@biotechbull",followers:"350K",emoji:"🧪",cost:1500,reach:2.4,conv:0.6,heat:14},
+      {name:"@retailinvest",followers:"900K",emoji:"💵",cost:3500,reach:3.0,conv:0.4,heat:18},
+      {name:"@wsj_tipster",followers:"180K",emoji:"📰",cost:1100,reach:1.6,conv:0.8,heat:9}
+    ]
+  },
+  {
+    id:4, name:"Mid-Cap Tech", emoji:"💻",
+    desc:"Hedge funds will notice.",
+    cash:25000,
+    assets:[
+      {tk:"$NXAI",nm:"Nexus AI Cloud",cap:2400,vol:0.10,start:38,spike:1.2,desc:"AI infra pick. 4 nines of buzzword density."},
+      {tk:"$QUAN",nm:"QuantumLeap Inc.",cap:1800,vol:0.12,start:22,spike:1.25,desc:"Quantum meets AI meets Web3 meets... no."},
+      {tk:"$EDGE",nm:"EdgeCompute Co.",cap:3100,vol:0.09,start:54,spike:1.15,desc:"Edge AI. Distributed. Whatever that means."}
+    ],
+    targetProfit:0.35,
+    durationSec:100,
+    maxHeat:55,
+    riskNotes:"Smarter money will front-run you. Algorithmic shorts will trigger.",
+    influencers:[
+      {name:"@macroalpha",followers:"1.1M",emoji:"📈",cost:8000,reach:3.5,conv:0.5,heat:22},
+      {name:"@finfluencer_",followers:"2.4M",emoji:"🎤",cost:15000,reach:4.0,conv:0.4,heat:28},
+      {name:"@traderjane",followers:"700K",emoji:"👩\u200d💼",cost:5500,reach:2.8,conv:0.7,heat:18}
+    ]
+  },
+  {
+    id:5, name:"Blue Chips", emoji:"🏛️",
+    desc:"The big leagues. The Feds.",
+    cash:100000,
+    assets:[
+      {tk:"$APPL",nm:"MegaPhone Corp.",cap:3.2e6,vol:0.04,start:182,spike:1.08,desc:"The fruit company. The original meme."},
+      {tk:"$NVDX",nm:"NovaDyne Systems",cap:4.1e6,vol:0.05,start:890,spike:1.10,desc:"GPUs and vibes."},
+      {tk:"$TSLX",nm:"Tesla2 Motors",cap:9.4e5,vol:0.06,start:235,spike:1.12,desc:"CEO tweets too much. Decent catalysts."}
+    ],
+    targetProfit:0.25,
+    durationSec:120,
+    maxHeat:45,
+    riskNotes:"You are operating at scale. Compliance, surveillance, the DOJ — all awake.",
+    influencers:[
+      {name:"@elon_clone",followers:"12M",emoji:"🚀",cost:60000,reach:6.0,conv:0.5,heat:40},
+      {name:"@cnbcfast",followers:"4.5M",emoji:"📺",cost:40000,reach:5.0,conv:0.7,heat:30},
+      {name:"@piedpiper",followers:"1.8M",emoji:"🧠",cost:22000,reach:3.5,conv:0.8,heat:22}
+    ]
+  }
+];
+
+function mulberry32(a){return function(){let t=a+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296}}
+let rng = mulberry32(Date.now() & 0xffffffff);
+function pick(arr){return arr[Math.floor(rng()*arr.length)]}
+
+function fmt(n,d=2){
+  if(!isFinite(n)) return "$0";
+  if(Math.abs(n)>=1e9) return "$"+(n/1e9).toFixed(2)+"B";
+  if(Math.abs(n)>=1e6) return "$"+(n/1e6).toFixed(2)+"M";
+  if(Math.abs(n)>=1e3) return "$"+(n/1e3).toFixed(2)+"K";
+  if(Math.abs(n)<0.01) return "$"+n.toFixed(5);
+  return "$"+n.toFixed(d);
+}
+function fmtPct(n,d=1){
+  return (n>=0?"+":"")+n.toFixed(d)+"%";
+}
+function fmtNum(n){
+  if(Math.abs(n)>=1e9) return (n/1e9).toFixed(2)+"B";
+  if(Math.abs(n)>=1e6) return (n/1e6).toFixed(2)+"M";
+  if(Math.abs(n)>=1e3) return (n/1e3).toFixed(1)+"K";
+  return n.toFixed(2);
+}
+
+let G = null;
+let TICK_INTERVAL = null;
+let CHART_INTERVAL = null;
+
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function blip(freq, dur=0.08, type="square", vol=0.04){
+  try{
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.frequency.value=freq; o.type=type;
+    g.gain.value=vol; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime+dur);
+  }catch(e){}
+}
+
+function startGame(){
+  if(audioCtx.state==="suspended") audioCtx.resume();
+  rng = mulberry32(Date.now() & 0xffffffff);
+  G = {
+    level:1,
+    cash: LEVELS[0].cash,
+    startCash: LEVELS[0].cash,
+    netWorth: LEVELS[0].cash,
+    target: null,
+    phase: "choose",
+    shares: 0,
+    avgCost: 0,
+    price: 0,
+    basePrice: 0,
+    hype: 0,
+    heat: 0,
+    timer: 0,
+    tickCount: 0,
+    history: [],
+    hired: new Set(),
+    hiredTime: {},
+    lastTweetTime: 0,
+    paused: false,
+    bankruptcyReason: "",
+    playerName: document.getElementById("playerName").value.trim() || "@trader"
+  };
+  document.getElementById("intro").style.display="none";
+  document.getElementById("game").style.display="flex";
+  document.getElementById("sidebar").style.display="flex";
+  document.getElementById("hud").style.display="flex";
+  buildTicker();
+  renderAssets();
+  renderInfluencers();
+  enterPhase("choose");
+  startTick();
+}
+
+function enterPhase(phase){
+  G.phase = phase;
+  const phaseMap = {
+    choose:{label:"PICK YOUR POISON",cls:""},
+    buy:{label:"ACCUMULATE",cls:"buy"},
+    pump:{label:"PUMP IT",cls:"pump"},
+    dump:{label:"EXIT. NOW.",cls:"dump"},
+    end:{label:"ROUND OVER",cls:"end"}
+  };
+  const p = phaseMap[phase];
+  const badge = document.getElementById("phaseBadge");
+  badge.className = "phase-badge " + p.cls;
+  badge.textContent = p.label;
+  buildActions();
+  buildComposer();
+  if(phase==="choose"){
+    G.timer = 0;
+  }
+}
+
+function chooseTarget(assetIdx){
+  const lvl = LEVELS[G.level-1];
+  const a = lvl.assets[assetIdx];
+  G.target = a;
+  G.price = a.start;
+  G.basePrice = a.start;
+  G.history = [{t:0, p:a.start}];
+  document.getElementById("targetName").textContent = a.tk;
+  document.getElementById("targetDesc").textContent = "— " + a.nm + " (" + lvl.name + ")";
+  feedAdd(`🎯 Target locked: ${a.tk} — ${a.nm}`, "you");
+  feedAdd(`📊 ${a.desc}. Mkt cap ${fmt(a.cap*1e9, 1)}.`, "influencer");
+  enterPhase("buy");
+  G.timer = 25;
+  setHud();
+}
+
+function buildActions(){
+  const grid = document.getElementById("actionGrid");
+  grid.innerHTML="";
+  if(G.phase==="choose"){
+    grid.innerHTML = `<button class="btn ghost" disabled>Pick an asset to begin</button>`;
+    return;
+  }
+  if(G.phase==="buy"){
+    addBtn(grid, "buy", "🟢 Buy 10%", ()=>buyPct(0.10));
+    addBtn(grid, "buy", "🟢 Buy 25%", ()=>buyPct(0.25));
+    addBtn(grid, "buy", "🟢 Buy 50%", ()=>buyPct(0.50));
+    addBtn(grid, "buy", "🟢 Buy All-In", ()=>buyPct(1.0));
+    addBtn(grid, "purple", "📢 Hire Influencer", ()=>openInfluencers());
+    addBtn(grid, "warn", "⏭ Start Pump", ()=>enterPhase("pump"));
+  }
+  if(G.phase==="pump"){
+    addBtn(grid, "boost", "📣 Post (free)", ()=>quickPost());
+    addBtn(grid, "purple", "👥 Hire Influencer", ()=>openInfluencers());
+    addBtn(grid, "warn", "💸 Buy Ad", ()=>buyAd());
+    addBtn(grid, "sell", "🔴 Sell 25%", ()=>sellPct(0.25));
+    addBtn(grid, "sell", "🔴 Sell 50%", ()=>sellPct(0.50));
+    addBtn(grid, "sell", "🔴 Sell All", ()=>sellPct(1.0));
+  }
+  if(G.phase==="dump" || G.phase==="end"){
+    addBtn(grid, "sell", "🔴 Sell 25%", ()=>sellPct(0.25));
+    addBtn(grid, "sell", "🔴 Sell 50%", ()=>sellPct(0.50));
+    addBtn(grid, "sell", "🔴 Sell All", ()=>sellPct(1.0));
+  }
+}
+function addBtn(parent, cls, label, fn){
+  const b = document.createElement("button");
+  b.className = "btn " + cls;
+  b.textContent = label;
+  b.onclick = fn;
+  parent.appendChild(b);
+}
+
+function buildComposer(){
+  const wrap = document.getElementById("composerWrap");
+  if(G.phase==="pump"){wrap.style.display="block"}
+  else {wrap.style.display="none"; return}
+  const box = document.getElementById("tweetBox");
+  box.value="";
+  updateComposerStats();
+  box.oninput = updateComposerStats;
+}
+
+const HOOKS = [
+  "$TK is the most asymmetric setup in $MARKET right now.",
+  "Just looked at the $TK chart. This is a coiled spring.",
+  "The narrative on $TK hasn't changed. Only the price has.",
+  "$TK about to rip. I'll let the chart do the talking.",
+  "If you can't see what $TK is doing, you shouldn't be trading.",
+  "Screenshots later. $TK — Mark this tweet.",
+  "$TK has a 10x from here easy. Float is tiny.",
+  "Worst case on $TK is a 2x. Best case is generational wealth.",
+  "Apes, this is the one. $TK. We stay loud.",
+  "$TK is going to be one of those names people wished they bought.",
+  "I have not been this convicted on a name in years. $TK.",
+  "Funding the bag. $TK. NFA but damn.",
+  "$TK is what happens when the market wakes up.",
+  "My position in $TK is not for sale. You have been warned.",
+  "Bought more $TK this morning. Adding is the only strategy.",
+  "The smart money is in $TK. You're still on the sideline?",
+  "$TK is the trade of the year. Conviction: 100%.",
+  "Three charts. Three signals. One ticker. $TK.",
+  "If $TK doesn't 5x from here I will delete this account.",
+  "Real talk: $TK is about to go vertical.",
+  "FOMO is the worst feeling in the world — or the best. $TK.",
+  "Sometimes the trade is just obvious. $TK obvious.",
+  "I don't post often, but when I do, it's $TK.",
+  "Reading the order flow on $TK. This thing is a coiled spring.",
+  "$TK is going to be in the textbooks in 6 months.",
+  "Just talked to someone inside $TK. Things are moving.",
+  "This is not financial advice. But $TK is going to rip.",
+  "You will see this tweet again when $TK is 10x.",
+  "$TK is the trade. Everything else is noise.",
+  "Stop fighting $TK. Ride it.",
+  "Family offices are buying $TK. Wake up.",
+  "$TK has the cleanest chart in the sector.",
+  "A pullback on $TK is a gift. Load up.",
+  "$TK about to break out of a 3-year base.",
+  "Risk/reward on $TK is obscene.",
+  "Once $TK moves, it moves fast. Be early, not late."
+];
+const EMOJIS = ["🚀","🔥","💎","👐","👀","📈","💯","🐂","🌙","⚡"];
+
+function updateComposerStats(){
+  const box = document.getElementById("tweetBox");
+  const text = box.value;
+  const len = text.length;
+  document.getElementById("charCount").textContent = `${len} / 280`;
+  const hypeBoost = G.hype / 100;
+  const baseReach = 5000 + len * 200;
+  const reach = Math.round(baseReach * (1+hypeBoost*0.5));
+  const em = (text.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).length;
+  const conv = Math.max(0, Math.min(100, Math.round(len/4 + em*8 - 5)));
+  const heat = Math.max(0, Math.round(conv*0.1 + (text.match(/guarantee|risk-free|insider|secret|10x/i)?.length||0)*6));
+  document.getElementById("reach").textContent = fmtNum(reach);
+  document.getElementById("conv").textContent = conv + "%";
+  const heatEl = document.getElementById("heatDelta");
+  heatEl.textContent = "+"+heat;
+  heatEl.style.color = heat>50 ? "var(--red)" : heat>25 ? "var(--orange)" : "var(--text-dim)";
+}
+
+function postTweet(){
+  const box = document.getElementById("tweetBox");
+  const text = box.value.trim();
+  if(!text) return;
+  if(text.length>280){feedAdd("❌ Post too long (max 280 chars).", "alert"); return}
+  publishTweet(text, "you");
+  box.value="";
+  updateComposerStats();
+}
+
+function quickPost(){
+  const hook = pick(HOOKS).replace(/\$TK/g, G.target.tk).replace(/\$MARKET/g, LEVELS[G.level-1].name);
+  const em = EMOJIS[Math.floor(rng()*EMOJIS.length)];
+  const text = hook + " " + em;
+  publishTweet(text, "you");
+}
+
+function publishTweet(text, who){
+  const lvl = LEVELS[G.level-1];
+  const len = text.length;
+  const em = (text.match(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/gu) || []).length;
+  const reach = 5000 + len*200;
+  const conv = Math.max(0, Math.min(100, Math.round(len/4 + em*8 - 5)));
+  const heat = Math.round(conv*0.1 + (text.match(/guarantee|risk-free|insider|secret|10x/i)?.length||0)*6);
+  G.hype = Math.min(100, G.hype + conv*0.4);
+  G.heat = Math.min(100, G.heat + heat);
+  const convFactor = 1 + conv/100 * (G.hype/100);
+  const movePct = 0.04 * convFactor * (lvl.assets.find(a=>a.tk===G.target.tk).spike-1);
+  G.price *= 1 + movePct;
+  G.history.push({t:G.tickCount, p:G.price});
+  const handle = who==="you" ? G.playerName : "@influencer";
+  feedAddTweet({
+    handle: handle, who:who, body:text,
+    impact: G.price > G.avgCost && G.shares>0 ? "📈 +"+(movePct*100).toFixed(1)+"%" : ""
+  });
+  blip(880, 0.05, "triangle");
+}
+
+function buyPct(pct){
+  if(G.phase==="end" || G.phase==="choose") return;
+  const cashToSpend = G.cash * pct;
+  if(cashToSpend < 1) {feedAdd("💸 No cash to deploy.","alert"); return}
+  const shares = cashToSpend / G.price;
+  G.shares += shares;
+  G.avgCost = ((G.avgCost*(G.shares-shares)) + cashToSpend) / G.shares;
+  G.cash -= cashToSpend;
+  feedAdd(`🟢 Bought ${fmtNum(shares)} ${G.target.tk} at ${fmt(G.price,4)}`, "you");
+  blip(220, 0.1, "square");
+  setHud();
+  if(G.phase==="buy" && G.cash < 1){
+    setTimeout(()=>enterPhase("pump"), 600);
+  }
+}
+function sellPct(pct){
+  if(G.phase==="end") return;
+  if(G.shares<=0) {feedAdd("🪙 No position to sell.","alert"); return}
+  const shares = G.shares * pct;
+  const proceeds = shares * G.price;
+  G.shares -= shares;
+  G.cash += proceeds;
+  const pnl = (G.price - G.avgCost) * shares;
+  feedAdd(`🔴 Sold ${fmtNum(shares)} ${G.target.tk} at ${fmt(G.price,4)} (${pnl>=0?"+":""}${fmt(pnl,2)})`, "you");
+  blip(440, 0.1, "sawtooth");
+  if(G.shares<0.0001) G.shares=0;
+  if(G.shares<=0 && G.phase==="dump"){
+    finalizeRound();
+  } else if(G.shares<=0 && G.phase==="pump"){
+    enterPhase("dump");
+    G.timer = 20;
+  }
+  setHud();
+}
+
+function buyAd(){
+  const lvl = LEVELS[G.level-1];
+  const cost = 200 * lvl.id;
+  if(G.cash < cost) {feedAdd("💸 Can't afford an ad.","alert"); return}
+  G.cash -= cost;
+  G.hype = Math.min(100, G.hype + 20);
+  G.heat = Math.min(100, G.heat + 4);
+  feedAdd(`💸 Bought an ad campaign. Reach spike. Heat +4%.`, "you");
+  blip(180, 0.15, "sawtooth");
+  setHud();
+}
+
+function renderInfluencers(){
+  const lvl = LEVELS[G.level-1];
+  const list = document.getElementById("influencerList");
+  list.innerHTML="";
+  lvl.influencers.forEach((inf, i)=>{
+    const row = document.createElement("div");
+    row.className="influencer";
+    const isHired = G?.hired && G.hired.has(i);
+    const cool = isHired && G.tickCount - (G.hiredTime?.[i] || -100) < 20;
+    row.innerHTML=`
+      <div class="avatar">${inf.emoji}</div>
+      <div class="info">
+        <div class="name">${inf.name}</div>
+        <div class="followers">${inf.followers} · +${Math.round(inf.heat*inf.conv)} heat</div>
+      </div>
+      <div class="cost">${fmt(inf.cost,0)}</div>
+    `;
+    if(cool){
+      const s = document.createElement("span");
+      s.className = "status cool";
+      s.textContent = "POSTED";
+      row.appendChild(s);
+    } else if(isHired){
+      const s = document.createElement("span");
+      s.className = "status hired";
+      s.textContent = "READY";
+      row.appendChild(s);
+    } else {
+      const btn = document.createElement("button");
+      btn.className = "btn ghost";
+      btn.style.padding="4px 8px";
+      btn.style.fontSize="11px";
+      btn.textContent = "Hire";
+      btn.onclick = ()=>hireInfluencer(i);
+      row.appendChild(btn);
+    }
+    list.appendChild(row);
+  });
+}
+function hireInfluencer(i){
+  const lvl = LEVELS[G.level-1];
+  const inf = lvl.influencers[i];
+  if(G.cash < inf.cost) {feedAdd("💸 Can't afford that influencer.","alert"); return}
+  if(G.hired.has(i) && G.tickCount - (G.hiredTime?.[i]||-100) < 20) {feedAdd("⏳ That influencer is still cooling down.","alert"); return}
+  G.cash -= inf.cost;
+  G.hired.add(i);
+  G.hiredTime[i] = G.tickCount;
+  G.hype = Math.min(100, G.hype + 15);
+  G.heat = Math.min(100, G.heat + inf.heat);
+  setTimeout(()=>{
+    if(!G) return;
+    const hook = pick(HOOKS).replace(/\$TK/g, G.target.tk).replace(/\$MARKET/g, lvl.name);
+    const em = EMOJIS[Math.floor(rng()*EMOJIS.length)];
+    publishTweet(hook + " " + em, "influencer");
+    feedAdd(`👥 ${inf.name} posted: "Loading the bag."`, "influencer");
+    renderInfluencers();
+  }, 1500 + rng()*1500);
+  feedAdd(`✅ Hired ${inf.name} for ${fmt(inf.cost,0)}.`, "you");
+  blip(560, 0.1, "triangle");
+  setHud();
+  renderInfluencers();
+}
+function openInfluencers(){
+  if(G.phase!=="pump" && G.phase!=="buy") return;
+  renderInfluencers();
+  document.getElementById("influencerList").scrollIntoView({behavior:"smooth", block:"center"});
+}
+
+function renderAssets(){
+  const lvl = LEVELS[G.level-1];
+  const list = document.getElementById("assetsList");
+  list.innerHTML="";
+  lvl.assets.forEach((a,i)=>{
+    const el = document.createElement("div");
+    el.className = "asset";
+    el.innerHTML = `
+      <div class="ticker">${a.tk}</div>
+      <div class="name">${a.nm}</div>
+      <div class="meta">cap ${fmt(a.cap*1e9, 1)} · ${fmtPct(a.vol*100,0)} vol</div>
+    `;
+    el.onclick = ()=>{
+      if(G && G.phase==="choose") chooseTarget(i);
+    };
+    list.appendChild(el);
+  });
+}
+
+function feedAdd(text, cls=""){
+  const el = document.createElement("div");
+  el.className = "tweet " + cls;
+  el.innerHTML = `<div class="body">${escapeHtml(text)}</div>`;
+  document.getElementById("feed").appendChild(el);
+  el.scrollIntoView({behavior:"smooth", block:"nearest"});
+  if(document.getElementById("feed").children.length > 60){
+    document.getElementById("feed").children[0].remove();
+  }
+}
+function feedAddTweet(t){
+  const el = document.createElement("div");
+  el.className = "tweet " + t.who;
+  el.innerHTML = `
+    <div class="meta">
+      <span class="handle">${escapeHtml(t.handle)}</span>
+      <span>· now</span>
+      ${t.impact?`<span class="impact ${t.impact.startsWith("📈")?"up":"down"}">${t.impact}</span>`:""}
+    </div>
+    <div class="body">${escapeHtml(t.body)}</div>
+  `;
+  document.getElementById("feed").appendChild(el);
+  el.scrollIntoView({behavior:"smooth", block:"nearest"});
+  if(document.getElementById("feed").children.length > 60){
+    document.getElementById("feed").children[0].remove();
+  }
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"})[c]);
+}
+
+function buildTicker(){
+  const symbols = ["$APPL","$TSLA","$NVDA","$BTC","$ETH","$DOGE","$SPX","$WOJAK","$PEPE","$GME","$AMC","$HODL","$NGMI","$WAGMI","$FOMU","$YOLO","$MEME"];
+  const items = [];
+  for(let i=0;i<20;i++){
+    const s = pick(symbols);
+    const pct = (rng()*6-3);
+    const cls = pct>=0?"pos":"neg";
+    items.push(`<span class="${cls}">${s} ${pct>=0?"+":""}${pct.toFixed(2)}%</span>`);
+  }
+  document.getElementById("ticker").innerHTML = items.join(" &nbsp;·&nbsp; ");
+}
+
+function drawChart(){
+  const canvas = document.getElementById("priceChart");
+  if(!canvas) return;
+  const ctx = canvas.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight;
+  canvas.width = w*dpr; canvas.height = h*dpr;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0,0,w,h);
+  if(!G || G.history.length<2) return;
+  const padL=54, padR=8, padT=8, padB=18;
+  const min = Math.min(...G.history.map(h=>h.p));
+  const max = Math.max(...G.history.map(h=>h.p));
+  const range = (max-min) || max*0.01 || 1;
+  const yFor = p => padT + (1 - (p-min)/range) * (h - padT - padB);
+  const xFor = i => padL + (i/(G.history.length-1)) * (w - padL - padR);
+  ctx.strokeStyle = "rgba(255,255,255,0.04)";
+  ctx.lineWidth = 1;
+  for(let i=0;i<4;i++){
+    const y = padT + i*(h-padT-padB)/3;
+    ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(w-padR,y); ctx.stroke();
+  }
+  ctx.fillStyle = "#5a637a";
+  ctx.font = "10px SF Mono, monospace";
+  for(let i=0;i<=3;i++){
+    const v = max - i*(range/3);
+    const y = padT + i*(h-padT-padB)/3 + 3;
+    ctx.fillText(fmt(v,4), 4, y);
+  }
+  const up = G.history[G.history.length-1].p >= G.history[0].p;
+  ctx.strokeStyle = up ? "#00d084" : "#ff4d6d";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  G.history.forEach((pt,i)=>{
+    const x=xFor(i), y=yFor(pt.p);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  const grad = ctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0, up?"rgba(0,208,132,0.25)":"rgba(255,77,109,0.25)");
+  grad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = grad;
+  ctx.lineTo(xFor(G.history.length-1), h-padB);
+  ctx.lineTo(padL, h-padB);
+  ctx.closePath();
+  ctx.fill();
+  if(G.shares>0 && G.avgCost>0){
+    const yc = yFor(G.avgCost);
+    ctx.strokeStyle = "rgba(255,200,87,0.5)";
+    ctx.setLineDash([4,3]);
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(padL,yc); ctx.lineTo(w-padR,yc); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#ffc857";
+    ctx.fillText("cost "+fmt(G.avgCost,4), Math.max(padL, w-110), yc-3);
+  }
+}
+
+function startTick(){
+  if(TICK_INTERVAL) clearInterval(TICK_INTERVAL);
+  TICK_INTERVAL = setInterval(()=>{
+    if(!G || G.paused) return;
+    G.tickCount++;
+    if(G.target){
+      const lvl = LEVELS[G.level-1];
+      const a = lvl.assets.find(x=>x.tk===G.target.tk);
+      const drift = (rng()-0.5) * a.vol * 0.02;
+      const hypePull = (G.hype/100) * 0.005;
+      const hypeDecay = G.hype>0 ? -0.002 : 0;
+      G.hype = Math.max(0, G.hype + hypeDecay);
+      const intrinsicPull = (G.basePrice*0.7 - G.price) * 0.001;
+      G.price *= 1 + drift + hypePull + intrinsicPull;
+      G.price = Math.max(0.000001, G.price);
+      G.history.push({t:G.tickCount, p:G.price});
+      if(G.history.length>400) G.history.shift();
+    }
+    if(G.phase==="buy" || G.phase==="pump" || G.phase==="dump"){
+      G.timer--;
+      if(G.timer<=0){
+        if(G.phase==="buy"){
+          if(G.shares<=0) {feedAdd("⏱ Time's up. You didn't buy anything. Round over.","alert"); finalizeRound();}
+          else enterPhase("pump");
+        } else if(G.phase==="pump"){
+          if(G.shares>0) {enterPhase("dump"); G.timer=20;}
+          else {feedAdd("⏱ Pump phase over. You have no position.","alert"); finalizeRound();}
+        } else if(G.phase==="dump"){
+          finalizeRound();
+        }
+      }
+    }
+    maybeRiskEvent();
+    setHud();
+  }, 1000);
+  if(CHART_INTERVAL) clearInterval(CHART_INTERVAL);
+  CHART_INTERVAL = setInterval(()=>{ if(G) drawChart(); }, 150);
+}
+
+function maybeRiskEvent(){
+  if(!G || G.phase==="choose" || G.phase==="end") return;
+  const lvl = LEVELS[G.level-1];
+  if(rng() < 0.06){
+    const heat = G.heat;
+    if(heat > 70 && rng() < 0.18){
+      G.paused = true;
+      feedAdd("🚔 The SEC has issued a subpoena. Your devices are seized. The scheme is OVER.","alert");
+      G.bankruptcyReason = "Arrested by the SEC. They found the Discord screenshots.";
+      setTimeout(()=>endGame(false, "arrest"), 2000);
+      return;
+    }
+    if(heat > 55 && rng() < 0.12){
+      G.cash = 0;
+      feedAdd("🏦 Your bank closed your account. Funds frozen pending investigation. Cash = $0.","alert");
+      G.bankruptcyReason = "De-banked. Suspicious wire patterns.";
+      setHud();
+    }
+    if(heat > 40 && rng() < 0.08 && G.phase==="pump"){
+      const liqPrice = G.avgCost * 0.6;
+      feedAdd(`📉 Margin call. Liquidation triggered at ${fmt(liqPrice,4)}. Your shares were force-sold.`,"alert");
+      G.cash += G.shares * G.price;
+      G.shares = 0;
+      G.heat = Math.max(0, G.heat - 30);
+      setHud();
+    }
+    if(rng() < 0.3){
+      const news = pick([
+        "📰 Bloomberg mentions $MKT in passing. Hype +2%.",
+        "📉 A short-seller report drops. Charts look heavy.",
+        "🚀 Volume spike on the daily. The algo crowd is here.",
+        "🪙 Whale wallet moves 50M into the exchange.",
+        "📺 CNBC runs a 15-second hit. Retail wakes up.",
+        "🗞 Op-ed in FT calls this generation's Pets.com."
+      ]).replace(/\$MKT/g, G.target.tk);
+      feedAdd(news, "");
+      G.hype = Math.min(100, G.hype + (rng()<0.5?3:-2));
+    }
+  }
+}
+
+function finalizeRound(){
+  if(G.shares>0){
+    const proceeds = G.shares * G.price;
+    G.cash += proceeds;
+    feedAdd(`🔴 Final liquidation: ${fmtNum(G.shares)} shares at ${fmt(G.price,4)} = ${fmt(proceeds,2)}`,"you");
+    G.shares = 0;
+  }
+  enterPhase("end");
+  setHud();
+  setTimeout(()=>endLevel(), 1500);
+}
+
+function endLevel(){
+  const lvl = LEVELS[G.level-1];
+  const finalCash = G.cash;
+  const invested = G.startCash;
+  const profit = finalCash - invested;
+  const profitPct = profit / invested;
+  const target = lvl.targetProfit;
+  const won = profitPct >= target;
+  showEndModal(won, profit, profitPct, target);
+}
+
+function showEndModal(won, profit, profitPct, target){
+  const lvl = LEVELS[G.level-1];
+  const inner = document.getElementById("modalInner");
+  inner.className = "modal " + (won ? "victory" : "gameover");
+  const nextLvl = LEVELS[G.level];
+  const startBank = G.startCash;
+  inner.innerHTML = `
+    <h2>${won ? "🏆 Scheme Successful" : "💀 Bankrupt"}</h2>
+    <p>${won
+      ? `You cleared the ${(target*100).toFixed(0)}% profit hurdle on <b>${lvl.name}</b>. Time to scale up.`
+      : `You needed a <b>${(target*100).toFixed(0)}%</b> net profit. You came up short. The algorithm has been unwound.`
+    }</p>
+    <div class="end-stats">
+      <div class="row spread"><span class="l">Started with</span><span class="v">${fmt(startBank,0)}</span></div>
+      <div class="row spread"><span class="l">Ended with</span><span class="v ${won?'g':'r'}">${fmt(G.cash,0)}</span></div>
+      <div class="row spread"><span class="l">Net P/L</span><span class="v ${profit>=0?'g':'r'}">${profit>=0?"+":""}${fmt(profit,0)} (${fmtPct(profitPct*100,1)})</span></div>
+      <div class="row spread"><span class="l">Target</span><span class="v c">+${(target*100).toFixed(0)}%</span></div>
+      <div class="row spread"><span class="l">Final heat</span><span class="v ${G.heat>60?'r':'c'}">${G.heat.toFixed(0)}%</span></div>
+    </div>
+    ${won
+      ? (nextLvl
+          ? `<p>Next: <b>Level ${nextLvl.id} — ${nextLvl.name}</b>${nextLvl.emoji}.<br>Starting bankroll: <span class="mono bold" style="color:var(--gold)">${fmt(nextLvl.cash,0)}</span>.<br>Target: +${(nextLvl.targetProfit*100).toFixed(0)}%. Watch the heat — bigger money, bigger eyes.</p>`
+          : `<p>You cleared all 5 levels. You are now a federally-registered, fully-debanked billionaire. <b>Game complete.</b></p>`)
+      : `<p>${G.bankruptcyReason || "Tip: post with conviction, time the dump, and don't get greedy. Try again."}</p>`
+    }
+    <div class="btn-row">
+      ${won
+        ? (nextLvl
+            ? `<button class="btn gold" onclick="nextLevel()">Next Level →</button>`
+            : `<button class="btn gold" onclick="restart()">Play Again</button>`)
+        : `<button class="btn gold" onclick="restart()">Try Again</button>`
+      }
+      <button class="btn ghost" onclick="closeModal()">View Chart</button>
+    </div>
+  `;
+  document.getElementById("modal").classList.add("active");
+}
+
+function closeModal(){
+  document.getElementById("modal").classList.remove("active");
+}
+
+function nextLevel(){
+  closeModal();
+  G.level++;
+  const lvl = LEVELS[G.level-1];
+  G.startCash = lvl.cash;
+  G.cash = lvl.cash;
+  G.shares = 0;
+  G.avgCost = 0;
+  G.hype = 0;
+  G.heat = 0;
+  G.hired = new Set();
+  G.hiredTime = {};
+  G.bankruptcyReason = "";
+  G.target = null;
+  G.history = [];
+  enterPhase("choose");
+  document.getElementById("targetName").textContent = "$TGT";
+  document.getElementById("targetDesc").textContent = "— " + lvl.desc;
+  renderAssets();
+  renderInfluencers();
+  feedAdd(`━━━ Level ${G.level}: ${lvl.name} ${lvl.emoji} ━━━`, "alert");
+  feedAdd(lvl.riskNotes, "alert");
+  setHud();
+  blip(700, 0.2, "sine");
+}
+
+function restart(){
+  closeModal();
+  document.getElementById("intro").style.display="flex";
+  document.getElementById("game").style.display="none";
+  document.getElementById("sidebar").style.display="none";
+  document.getElementById("hud").style.display="none";
+  if(TICK_INTERVAL) clearInterval(TICK_INTERVAL);
+  if(CHART_INTERVAL) clearInterval(CHART_INTERVAL);
+  G = null;
+}
+
+function endGame(victory, reason){
+  G.paused = true;
+  enterPhase("end");
+  setTimeout(()=>{
+    const inner = document.getElementById("modalInner");
+    inner.className = "modal gameover";
+    inner.innerHTML = `
+      <h2>💀 ${reason==="arrest" ? "Arrested" : "Game Over"}</h2>
+      <p>${G.bankruptcyReason || "The scheme unraveled."}</p>
+      <div class="end-stats">
+        <div class="row spread"><span class="l">Final cash</span><span class="v r">${fmt(G.cash,0)}</span></div>
+        <div class="row spread"><span class="l">Level reached</span><span class="v c">${G.level} / 5</span></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn gold" onclick="restart()">Restart</button>
+      </div>
+    `;
+    document.getElementById("modal").classList.add("active");
+  }, 200);
+}
+
+function setHud(){
+  if(!G) return;
+  document.getElementById("hudCash").textContent = fmt(G.cash, 0);
+  const netWorth = G.cash + G.shares * G.price;
+  document.getElementById("hudNet").textContent = fmt(netWorth, 0);
+  document.getElementById("hudLevel").textContent = `${G.level} / 5`;
+  const heat = G.heat.toFixed(0);
+  const heatEl = document.getElementById("hudHeat");
+  heatEl.textContent = heat + "%";
+  heatEl.style.color = G.heat>60?"var(--red)":G.heat>30?"var(--orange)":"var(--text-dim)";
+
+  const up = G.history.length>=2 ? G.history[G.history.length-1].p >= G.history[0].p : true;
+  const pct = G.basePrice>0 ? (G.price/G.basePrice-1)*100 : 0;
+  document.getElementById("priceDisplay").textContent = fmt(G.price, 4);
+  document.getElementById("priceDisplay").className = "chart-price " + (up?"up":"down");
+  document.getElementById("priceChange").textContent = `${G.price>=G.basePrice?"+":""}${fmt(G.price-G.basePrice,4)} (${fmtPct(pct,1)})`;
+  document.getElementById("priceChange").style.color = pct>=0?"var(--green)":"var(--red)";
+
+  document.getElementById("shares").textContent = G.shares>0 ? fmtNum(G.shares) : "0";
+  document.getElementById("avgCost").textContent = G.avgCost>0 ? fmt(G.avgCost,4) : "—";
+  document.getElementById("posValue").textContent = G.shares>0 ? fmt(G.shares*G.price,2) : "$0";
+  const pnl = G.shares * (G.price - G.avgCost);
+  const pnlEl = document.getElementById("pnl");
+  pnlEl.textContent = (G.shares>0?(pnl>=0?"+":"")+fmt(pnl,2):"$0");
+  pnlEl.style.color = pnl>0?"var(--green)":pnl<0?"var(--red)":"var(--text-dim)";
+
+  const fill = document.getElementById("timerFill");
+  const lvl = LEVELS[G.level-1];
+  if(G.phase==="choose"){
+    document.getElementById("timerLabel").textContent = "—";
+    fill.style.width = "0%";
+  } else {
+    const dur = G.phase==="buy" ? 25 : G.phase==="pump" ? lvl.durationSec : 20;
+    const pct = Math.max(0, G.timer/dur*100);
+    fill.style.width = pct+"%";
+    fill.className = "timer-fill " + (pct<25?"danger":"");
+    document.getElementById("timerLabel").textContent = G.timer + "s";
+  }
+
+  document.getElementById("vol").textContent = fmtNum((G.history[Math.max(0,G.history.length-2)]?.p || G.price) * 1000);
+  const targetAsset = LEVELS[G.level-1].assets.find(a=>a.tk===(G.target?.tk||'X'));
+  document.getElementById("mcap").textContent = targetAsset ? fmt(G.price * targetAsset.cap, 1) : "—";
+  document.getElementById("hype").textContent = G.hype.toFixed(0);
+  const status = document.getElementById("status");
+  if(pct>30){ status.innerHTML='MOONING 🚀'; status.style.color='var(--green)' }
+  else if(pct<-20){ status.innerHTML='NUKED 💥'; status.style.color='var(--red)' }
+  else if(pct>5){ status.innerHTML='BULLISH 📈'; status.style.color='var(--green)' }
+  else if(pct<-5){ status.innerHTML='BEARISH 📉'; status.style.color='var(--red)' }
+  else { status.innerHTML='CHOPPY 🌊'; status.style.color='var(--text-dim)' }
+}
+
+setInterval(()=>{ if(G) renderInfluencers(); }, 1000);
+
+window.addEventListener("resize", ()=>{ if(G) drawChart(); });
+window.addEventListener("load", ()=>{
+  buildTicker();
+  setInterval(()=>{ if(!G) buildTicker(); }, 60000);
+});
+
+</script>
+</body>
+</html>
