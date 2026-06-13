@@ -1013,7 +1013,7 @@ const ASSETS = [
 // Each event: text (with $TK placeholder), tag, impact (+/-% on price), asset (or 'market'), industry, heatDelta
 const NEWS_TEMPLATES = [
   // PENNY STOCK EVENTS
-  {text:"$TK files Form 8-K. "Massive catalyst incoming," says CEO in video.",tag:"bull",impact:0.12,asset:null,industry:"penny",heat:3},
+  {text:"$TK files Form 8-K. \"Massive catalyst incoming,\" says CEO in video.",tag:"bull",impact:0.12,asset:null,industry:"penny",heat:3},
   {text:"$TK drops 20% on 50M share dilution. Retail panics.",tag:"bear",impact:-0.15,asset:null,industry:"penny",heat:2},
   {text:"Breaking: $TK announces reverse split 10:1. Effective immediately.",tag:"bear",impact:-0.08,asset:null,industry:"penny",heat:4},
   {text:"$TK's CFO resigns. \"No comment on ongoing investigations.\"",tag:"bear",impact:-0.10,asset:null,industry:"penny",heat:6},
@@ -1256,7 +1256,7 @@ function fmtNum(n){
   if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+"K";
   return n.toFixed(2);
 }
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"&#39;"})[c])}
+function esc(s){var q34=String.fromCharCode(34),q39=String.fromCharCode(39);return s.replace(/[&<>"']/g,function(c){if(c==='&')return'&amp;';if(c==='<')return'&lt;';if(c==='>')return'&gt;';if(c===q34)return'&quot;';if(c===q39)return'&#39;';return c})}
 
 // ---- AUDIO ----
 const AC = new (window.AudioContext||window.webkitAudioContext)();
@@ -1828,7 +1828,7 @@ function renderPositions(){
       <td>${a.tk}</td>
       <td class="right">${fmtNum(a.owned)}</td>
       <td class="right">${fmt(a.avgCost,a.price<1?4:2)}</td>
-      <td class="right ${pnl>=0?"green":"red"}">${pnl>=0?"+":"":"+"}"+fmt(pnl,2)+"</td>
+      <td class="right ${pnl>=0?"green":"red"}">${(pnl>=0?"+":"-")+fmt(Math.abs(pnl),2)}+"</td>
     `;
     tr.onclick=()=>selectAsset(a.tk);
     tbody.appendChild(tr);
