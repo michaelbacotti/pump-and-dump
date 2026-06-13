@@ -780,7 +780,7 @@ body{
         <li><b>Buy</b> at the bid price. Each asset has a realistic bid/ask spread.</li>
         <li><b>Pump</b> via X posts, hired influencers, and ads. Watch the order book fill up.</li>
         <li><b>Exit</b> before the heat triggers an arrest, de-bank, or margin call.</li>
-        <li>Clear the profit target to advance. Go broke and it's over.</li>
+        <li>Clear the profit target to advance. Go bankrupt (margin call) and it's over.</li>
         <li>Gold and oil require <b>Elon Musk status</b> (Level 4+) to move meaningfully.</li>
       </ul>
     </div>
@@ -1383,13 +1383,9 @@ function tick(){
     G.timer--;
     if(G.timer<=0){
       if(G.phase==="buy"){
-        const pos=Object.values(G.assets).filter(a=>a.owned>0);
-        if(pos.length===0){addNews({text:"⏱ Accumulation phase over. No positions opened. Round over.",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");finalizeRound();}
-        else enterPhase("pump");
+        enterPhase("pump");
       } else if(G.phase==="pump"){
-        const pos=Object.values(G.assets).filter(a=>a.owned>0);
-        if(pos.length===0){addNews({text:"⏱ Pump phase over. No position. Round over.",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");finalizeRound();}
-        else enterPhase("dump");
+        enterPhase("dump");
       } else if(G.phase==="dump"){
         finalizeRound();
       }
@@ -1527,8 +1523,9 @@ function placeSell(){
   blip(440,.1,"sawtooth");
   setHud();
   renderPositions();
-  if(a.owned<=0&&G.phase==="dump")finalizeRound();
-  if(a.owned<=0&&G.phase==="pump"){enterPhase("dump");G.timer=LEVELS[G.level-1].durDump;}
+  // Multi-position: selling doesn't auto-end the round
+  setHud();
+  renderPositions();
 }
 
 // ---- POSTS ----
@@ -1881,10 +1878,14 @@ function setHud(){
 
 // ---- FINALIZE ROUND ----
 function finalizeRound(){
+  // Close all open positions at current market price
   Object.values(G.assets).forEach(a=>{
     if(a.owned>0){
+      const pnl=a.owned*(a.price-a.avgCost);
       G.cash+=a.owned*a.price;
-      G.totalPnl+=a.owned*(a.price-a.avgCost);
+      G.totalPnl+=pnl;
+      G.dayPnl+=pnl;
+      if(pnl>0)G.wins++;
       a.owned=0;
     }
   });
@@ -1897,43 +1898,50 @@ function endLevel(){
   const lvl=LEVELS[G.level-1];
   const profit=G.cash-G.startCash;
   const pct=profit/G.startCash;
-  const won=pct>=lvl.target;
-  showEndModal(won,profit,pct,lvl.target);
+  // Margin bankruptcy: if cash < 20% of starting bankroll, wiped out
+  const marginThreshold=G.startCash*0.20;
+  const bankrupt=G.cash<marginThreshold;
+  // Level up only if profit >= target AND not bankrupt
+  const leveledUp=!bankrupt&&pct>=lvl.target;
+  showEndModal(bankrupt,leveledUp,profit,pct,lvl.target);
 }
-function showEndModal(won,profit,pct,target){
+function showEndModal(bankrupt,leveledUp,profit,pct,target){
   const inner=document.getElementById("modalInner");
-  inner.className="modal"+(won?"":" gameover");
+  const lvl=LEVELS[G.level-1];
   const nextLvl=LEVELS[G.level];
-  inner.innerHTML=`
-    <h2 style="color:${won?"var(--gold)":"var(--red)"}">${won?"🏆 Scheme Successful":"💀 Bankrupt"}</h2>
-    <p>${won?`Cleared the <b>${(target*100).toFixed(0)}%</b> profit hurdle on <b>${LEVELS[G.level-1].name}</b>.`:`Needed <b>${(target*100).toFixed(0)}%</b> profit. Came up short.`}</p>
-    <div class="end-stats">
-      <div class="row"><span class="l">Started with</span><span class="v">${fmt(G.startCash,0)}</span></div>
-      <div class="row"><span class="l">Ended with</span><span class="v ${won?"g":"r"}">${fmt(G.cash,0)}</span></div>
-      <div class="row"><span class="l">Net P/L</span><span class="v ${profit>=0?"g":"r"}">${profit>=0?"+":""}${fmt(profit,0)} (${fmtPct(pct*100,1)})</span></div>
-      <div class="row"><span class="l">Target</span><span class="v c">+${(target*100).toFixed(0)}%</span></div>
-      <div class="row"><span class="l">Final heat</span><span class="v ${G.heat>60?"r":"c"}">${G.heat.toFixed(0)}%</span></div>
-      <div class="row"><span class="l">Trades</span><span class="v">${G.trades}</span></div>
-    </div>
-    ${won
-      ?(nextLvl
-        ?`<p>Next: <b>Level ${nextLvl.id} — ${nextLvl.name}</b>.<br>Bankroll: <b style="color:var(--gold)">${fmt(nextLvl.cash,0)}</b>. Target: +${(nextLvl.target*100).toFixed(0)}%.<br>Gold and oil are now unlocked.</p>`
-        :`<p>All 5 levels cleared. You're a fully-debanked billionaire. <b>Game complete.</b></p>`)
-      :`<p>${G.bankruptcyReason||"Tip: monitor heat, time your exits, don't overstay the pump."}</p>`
-    }
-    <div class="btn-row">
-      ${won?(nextLvl?`<button class="btn gold" onclick="nextLevel()">Next Level →</button>`:`<button class="btn gold" onclick="restart()">Play Again</button>`):`<button class="btn gold" onclick="restart()">Try Again</button>`}
-      <button class="btn ghost" onclick="closeModal()">View Chart</button>
-    </div>
-  `;
+  if(bankrupt){
+    inner.className="modal gameover";
+    inner.innerHTML='<h2 style="color:var(--red)">:-( Bankrupt</h2><p>Net worth fell below the margin requirement.<br>Final cash: <b>'+fmt(G.cash,0)+'</b>.</p><div class="end-stats"><div class="row"><span class="l">Started with</span><span class="v">'+fmt(G.startCash,0)+'</span></div><div class="row"><span class="l">Final cash</span><span class="v r">'+fmt(G.cash,0)+'</span></div><div class="row"><span class="l">Net P/L</span><span class="v r">'+(profit>=0?"+":"")+fmt(profit,0)+' ('+fmtPct(pct*100,1)+')</span></div><div class="row"><span class="l">Level reached</span><span class="v c">'+G.level+'/5</span></div></div><p>'+(G.bankruptcyReason||"Tip: spread positions, watch heat, time your exits.")+'</p><div class="btn-row"><button class="btn gold" onclick="restart()">Try Again</button></div>';
+  } else if(leveledUp){
+    inner.className="modal";
+    inner.innerHTML='<h2 style="color:var(--gold)">:-) Level Up!</h2><p>Cleared the <b>'+(target*100).toFixed(0)+'%</b> profit hurdle on <b>'+lvl.name+'</b>.</p><div class="end-stats"><div class="row"><span class="l">Started with</span><span class="v">'+fmt(G.startCash,0)+'</span></div><div class="row"><span class="l">Ended with</span><span class="v g">'+fmt(G.cash,0)+'</span></div><div class="row"><span class="l">Net P/L</span><span class="v g">'+(profit>=0?"+":"")+fmt(profit,0)+' ('+fmtPct(pct*100,1)+')</span></div><div class="row"><span class="l">Target</span><span class="v c">+'+(target*100).toFixed(0)+'%</span></div><div class="row"><span class="l">Final heat</span><span class="v '+(G.heat>60?"r":"c")+'">'+G.heat.toFixed(0)+'%</span></div><div class="row"><span class="l">Trades</span><span class="v">'+G.trades+'</span></div></div>'+(nextLvl?'<p>Next: <b>Level '+nextLvl.id+' — '+nextLvl.name+'</b>.<br>Bankroll: <b style="color:var(--gold)">'+fmt(nextLvl.cash,0)+'</b>. Target: +'+(nextLvl.target*100).toFixed(0)+'%.<br>Gold and oil unlock at Level 4.</p>':'<p>All 5 levels cleared. Fully debanked. <b>Game complete.</b></p>')+'<div class="btn-row">'+(nextLvl?'<button class="btn gold" onclick="nextLevel()">Next Level --></button>':'<button class="btn gold" onclick="restart()">Play Again</button>')+'<button class="btn ghost" onclick="closeModal()">View Chart</button></div>';
+  } else {
+    inner.className="modal";
+    inner.innerHTML='<h2 style="color:var(--orange)">:-/ Survived</h2><p>Margin check passed but fell short of the <b>'+(target*100).toFixed(0)+'%</b> target on <b>'+lvl.name+'</b>.</p><div class="end-stats"><div class="row"><span class="l">Started with</span><span class="v">'+fmt(G.startCash,0)+'</span></div><div class="row"><span class="l">Ended with</span><span class="v '+(G.cash>=G.startCash?"g":"r")+'">'+fmt(G.cash,0)+'</span></div><div class="row"><span class="l">Net P/L</span><span class="v '+(profit>=0?"g":"r")+'">'+(profit>=0?"+":"")+fmt(profit,0)+' ('+fmtPct(pct*100,1)+')</span></div><div class="row"><span class="l">Target</span><span class="v c">+'+(target*100).toFixed(0)+'%</span></div><div class="row"><span class="l">Final heat</span><span class="v '+(G.heat>60?"r":"c")+'">'+G.heat.toFixed(0)+'%</span></div><div class="row"><span class="l">Trades</span><span class="v">'+G.trades+'</span></div></div><p>Keep your bankroll and try again — or pick a different asset.</p><div class="btn-row"><button class="btn gold" onclick="replayLevel()">Try Again -- Same Level</button><button class="btn ghost" onclick="closeModal()">View Chart</button></div>';
+  }
   document.getElementById("modal").classList.add("active");
 }
 function closeModal(){document.getElementById("modal").classList.remove("active")}
+function replayLevel(){
+  closeModal();
+  Object.values(G.assets).forEach(a=>{a.owned=0;a.avgCost=0;a.hype=0;a.heat=0;});
+  G.heat=0;G.hired=new Set();G.hiredTime={};
+  G.dayPnl=0;G.bankruptcyReason="";
+  G.selected=null;
+  document.getElementById("chartSym").textContent="—";
+  document.getElementById("chartName").textContent="Select an asset";
+  buildWatchlist();buildNews();buildChat();renderPositions();
+  enterPhase("choose");
+  addNews({text:"━━━ Level "+G.level+" — "+LEVELS[G.level-1].name+" ━━━  Bankroll: "+fmt(G.cash,0)+"  Target: +"+(LEVELS[G.level-1].target*100).toFixed(0)+"%",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
+  blip(400,.15,"sine");
+  setHud();
+}
 function nextLevel(){
   closeModal();
   G.level++;
   const lvl=LEVELS[G.level-1];
-  G.startCash=lvl.cash;G.cash=lvl.cash;
+  G.startCash=lvl.cash;
+  G.cash=Math.min(G.cash,lvl.cash);
   G.dayPnl=0;G.heat=0;G.hired=new Set();G.hiredTime={};
   G.bankruptcyReason="";
   initLevelAssets();
