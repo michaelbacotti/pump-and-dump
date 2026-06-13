@@ -542,6 +542,10 @@ body{
 .pos-table td.red{color:var(--red)}
 .pos-table tr:hover td{background:var(--bg-3)}
 .pos-table tr.active td{background:rgba(58,142,245,.08)}
+.pos-tag{padding:1px 5px;border-radius:3px;font-size:10px;font-weight:700;margin-right:4px}
+.pos-tag.long{background:rgba(0,201,122,.2);color:var(--green)}
+.pos-tag.short{background:rgba(232,58,88,.2);color:var(--red)}
+.order-btn.short{background:rgba(232,58,88,.15);color:var(--red);border-color:rgba(232,58,88,.3)}
 
 /* P&L STRIP */
 .pl-strip{
@@ -893,6 +897,7 @@ body{
         <div class="order-buttons">
           <button class="order-btn buy" id="btnBuy" onclick="placeBuy()">Buy</button>
           <button class="order-btn sell" id="btnSell" onclick="placeSell()">Sell</button>
+          <button class="order-btn short" id="btnShort" onclick="placeShort()">Short</button>
         </div>
       </div>
 
@@ -1325,6 +1330,8 @@ function initLevelAssets(){
       heat:0,
       owned:0,
       avgCost:0,
+      shortQty:0,
+      shortAvgCost:0,
     };
     G.history[a.tk]=[{t:0,p:a.start}];
   });
@@ -1484,7 +1491,7 @@ function updateOrdPreview(){
   document.getElementById("ordQtyPreview").textContent=qty+" sh";
 }
 function placeBuy(){
-  if(!G||!G.selected||G.phase==="choose"||G.phase==="end")return;
+  if(!G||!G.selected||G.phase==="end")return;
   const a=G.assets[G.selected];
   const qty=parseInt(document.getElementById("ordQty").value)||0;
   if(qty<=0)return;
@@ -1502,28 +1509,60 @@ function placeBuy(){
   renderPositions();
   if(G.phase==="buy"&&G.cash<10)setTimeout(()=>enterPhase("pump"),500);
 }
-function placeSell(){
-  if(!G||!G.selected||G.phase==="choose"||G.phase==="end")return;
+function placeShort(){
+  if(!G||!G.selected||G.phase==="end")return;
   const a=G.assets[G.selected];
   const qty=parseInt(document.getElementById("ordQty").value)||0;
-  if(qty<=0||a.owned<=0)return;
-  const sqty=Math.min(qty,a.owned);
+  if(qty<=0)return;
   let price=G.otType==="market"?a.bid:parseFloat(document.getElementById("ordPrice").value)||a.bid;
   if(price<=0)price=a.bid;
-  const proceeds=sqty*price;
-  const pnl=sqty*(price-a.avgCost);
+  const proceeds=qty*price;
+  // Short: receive cash, owe the asset. Cost to cover = qty * price now.
   G.cash+=proceeds;
-  a.owned-=sqty;
-  if(a.owned<0.0001)a.owned=0;
+  a.shortQty+=qty;
+  a.shortAvgCost=((a.shortAvgCost*(a.shortQty-qty))+proceeds)/a.shortQty;
   G.trades++;
-  G.totalPnl+=pnl;
-  G.dayPnl+=pnl;
-  if(pnl>0)G.wins++;
-  addNews({text:"🔴 Sold "+sqty+" "+a.tk+" @ "+fmt(price,4)+". P/L: "+(pnl>=0?"+":"")+fmt(pnl,2)+".",tag:pnl>=0?"bull":"bear",impact:0,asset:null,industry:null,heat:0},"you");
-  blip(440,.1,"sawtooth");
+  addNews({text:"🔺 Shorted "+qty+" "+a.tk+" @ "+fmt(price,4)+". Received: "+fmt(proceeds,2)+".",tag:"bear",impact:0,asset:null,industry:null,heat:0},"you");
+  blip(330,.1,"sawtooth");
   setHud();
   renderPositions();
-  // Multi-position: selling doesn't auto-end the round
+}
+function placeSell(){
+  if(!G||!G.selected||G.phase==="end")return;
+  const a=G.assets[G.selected];
+  const qty=parseInt(document.getElementById("ordQty").value)||0;
+  if(qty<=0)return;
+  if(a.shortQty>0){
+    // Cover short position
+    const coverQty=Math.min(qty,a.shortQty);
+    let price=G.otType==="market"?a.bid:parseFloat(document.getElementById("ordPrice").value)||a.bid;
+    if(price<=0)price=a.bid;
+    const cost=coverQty*price;
+    const pnl=coverQty*(a.shortAvgCost-price);
+    G.cash-=cost;
+    a.shortQty-=coverQty;
+    if(a.shortQty<0.0001)a.shortQty=0;
+    G.trades++;
+    G.totalPnl+=pnl;G.dayPnl+=pnl;
+    if(pnl>0)G.wins++;
+    addNews({text:"🔵 Covered "+coverQty+" "+a.tk+" @ "+fmt(price,4)+". P/L: "+(pnl>=0?"+":"")+fmt(pnl,2)+".",tag:pnl>=0?"bull":"bear",impact:0,asset:null,industry:null,heat:0},"you");
+    blip(440,.1,"sawtooth");
+  } else if(a.owned>0){
+    // Sell long position
+    const sqty=Math.min(qty,a.owned);
+    let price=G.otType==="market"?a.bid:parseFloat(document.getElementById("ordPrice").value)||a.bid;
+    if(price<=0)price=a.bid;
+    const proceeds=sqty*price;
+    const pnl=sqty*(price-a.avgCost);
+    G.cash+=proceeds;
+    a.owned-=sqty;
+    if(a.owned<0.0001)a.owned=0;
+    G.trades++;
+    G.totalPnl+=pnl;G.dayPnl+=pnl;
+    if(pnl>0)G.wins++;
+    addNews({text:"🔴 Sold "+sqty+" "+a.tk+" @ "+fmt(price,4)+". P/L: "+(pnl>=0?"+":"")+fmt(pnl,2)+".",tag:pnl>=0?"bull":"bear",impact:0,asset:null,industry:null,heat:0},"you");
+    blip(440,.1,"sawtooth");
+  }
   setHud();
   renderPositions();
 }
@@ -1817,15 +1856,19 @@ function sendChat(){
 function renderPositions(){
   const tbody=document.getElementById("posBody");
   tbody.innerHTML="";
-  Object.values(G.assets).filter(a=>a.owned>0).forEach(a=>{
-    const pnl=a.owned*(a.price-a.avgCost);
+  Object.values(G.assets).filter(a=>a.owned>0||a.shortQty>0).forEach(a=>{
+    const isShort=a.shortQty>0;
+    const qty=isShort?a.shortQty:a.owned;
+    const avgCost=isShort?a.shortAvgCost:a.avgCost;
+    const pnl=isShort?a.shortQty*(a.shortAvgCost-a.price):a.owned*(a.price-a.avgCost);
+    const tag=isShort?"SHT":"LONG";
     const tr=document.createElement("tr");
     tr.className="pos-table"+(G.selected===a.tk?" active":"");
     tr.innerHTML=`
-      <td>${a.tk}</td>
-      <td class="right">${fmtNum(a.owned)}</td>
-      <td class="right">${fmt(a.avgCost,a.price<1?4:2)}</td>
-      <td class="right ${pnl>=0?"green":"red"}">${(pnl>=0?"+":"-")+fmt(Math.abs(pnl),2)}+"</td>
+      <td><span class="pos-tag ${isShort?"short":"long"}">${tag}</span>${a.tk}</td>
+      <td class="right">${fmtNum(qty)}</td>
+      <td class="right">${fmt(avgCost,a.price<1?4:2)}</td>
+      <td class="right ${pnl>=0?"green":"red"}">${(pnl>=0?"+":"-")+fmt(Math.abs(pnl),2)}</td>
     `;
     tr.onclick=()=>selectAsset(a.tk);
     tbody.appendChild(tr);
@@ -1872,13 +1915,17 @@ function setHud(){
   document.getElementById("plTrades").textContent=G.trades;
   document.getElementById("plWins").textContent=G.wins;
   // order buttons
-  const hasPos=G.selected&&G.assets[G.selected]?.owned>0;
-  document.getElementById("btnSell").disabled=!hasPos;
+  const a=G.selected&&G.assets[G.selected];
+  const hasLong=a&&a.owned>0;
+  const hasShort=a&&a.shortQty>0;
+  document.getElementById("btnBuy").disabled=!G||G.phase==="end"||!G.selected;
+  document.getElementById("btnSell").disabled=!G||G.phase==="end"||!G.selected||(!hasLong&&!hasShort);
+  document.getElementById("btnShort").disabled=!G||G.phase==="end"||!G.selected;
 }
 
 // ---- FINALIZE ROUND ----
 function finalizeRound(){
-  // Close all open positions at current market price
+  // Close all open positions (long and short) at current market price
   Object.values(G.assets).forEach(a=>{
     if(a.owned>0){
       const pnl=a.owned*(a.price-a.avgCost);
@@ -1887,6 +1934,14 @@ function finalizeRound(){
       G.dayPnl+=pnl;
       if(pnl>0)G.wins++;
       a.owned=0;
+    }
+    if(a.shortQty>0){
+      const pnl=a.shortQty*(a.shortAvgCost-a.price);
+      G.cash-=a.shortQty*a.price; // pay to cover at current price
+      G.totalPnl+=pnl;
+      G.dayPnl+=pnl;
+      if(pnl>0)G.wins++;
+      a.shortQty=0;
     }
   });
   enterPhase("end");
@@ -1924,7 +1979,7 @@ function showEndModal(bankrupt,leveledUp,profit,pct,target){
 function closeModal(){document.getElementById("modal").classList.remove("active")}
 function replayLevel(){
   closeModal();
-  Object.values(G.assets).forEach(a=>{a.owned=0;a.avgCost=0;a.hype=0;a.heat=0;});
+  Object.values(G.assets).forEach(a=>{a.owned=0;a.avgCost=0;a.shortQty=0;a.shortAvgCost=0;a.hype=0;a.heat=0;});
   G.heat=0;G.hired=new Set();G.hiredTime={};
   G.dayPnl=0;G.bankruptcyReason="";
   G.selected=null;
