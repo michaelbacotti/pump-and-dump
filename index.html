@@ -952,7 +952,8 @@ body{
       </div>
       <div class="pl-strip">
         <div class="pl-cell"><span class="lbl">Day P/L</span><span class="val g" id="plDay">$0</span></div>
-        <div class="pl-cell"><span class="lbl">Total P/L</span><span class="val" id="plTotal">$0</span></div>
+        <div class="pl-cell"><span class="lbl">Realized</span><span class="val" id="plTotal">$0</span></div>
+        <div class="pl-cell"><span class="lbl">Unreal.</span><span class="val" id="plUnreal">$0</span></div>
         <div class="pl-cell"><span class="lbl">Trades</span><span class="val" id="plTrades">0</span></div>
         <div class="pl-cell"><span class="lbl">Wins</span><span class="val g" id="plWins">0</span></div>
       </div>
@@ -1311,9 +1312,10 @@ const NPC_POOL = [
   },
 ];
 
-// NPC personality state
+// NPC personality state — initialize all NPCs to can-post-immediately
 let npcLastPost = {};
-const NPC_COOLDOWN = 5;
+NPC_POOL.forEach(n => npcLastPost[n.id] = -NPC_COOLDOWN);
+const NPC_COOLDOWN = 3; // 3 ticks (3 seconds) between same NPC
 
 function pickRandomNpcMsg(npc, asset){
   const msgs = npc.msgs;
@@ -2224,6 +2226,10 @@ function setHud(){
   document.getElementById("plDay").className="val "+(G.dayPnl>=0?"g":"r");
   document.getElementById("plTotal").textContent=(G.totalPnl>=0?"+":"")+fmt(G.totalPnl,0);
   document.getElementById("plTotal").className="val "+(G.totalPnl>=0?"g":"r");
+  // Unrealized P/L from open positions (both long and short)
+  const unrealPnl=Object.values(G.assets).reduce((s,a)=>s+a.owned*(a.price-a.avgCost),0)+Object.values(G.assets).reduce((s,a)=>s+a.shortQty*(a.shortAvgCost-a.price),0);
+  document.getElementById("plUnreal").textContent=(unrealPnl>=0?"+":"")+fmt(unrealPnl,0);
+  document.getElementById("plUnreal").className="val "+(unrealPnl>=0?"g":"r");
   document.getElementById("plTrades").textContent=G.trades;
   document.getElementById("plWins").textContent=G.wins;
   // order buttons
