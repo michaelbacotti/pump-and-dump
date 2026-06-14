@@ -1313,7 +1313,7 @@ const NPC_POOL = [
 
 // NPC personality state
 let npcLastPost = {};
-const NPC_COOLDOWN = 8;
+const NPC_COOLDOWN = 5;
 
 function pickRandomNpcMsg(npc, asset){
   const msgs = npc.msgs;
@@ -1328,8 +1328,7 @@ function npcCanPost(npcId){
 
 function tickNpcChat(){
   if(!G || G.paused || G.phase === "choose") return;
-  if(G.chatCooldown > 0) return;
-  if(Math.random() > 0.30) return;
+  if(G.chatCooldown > 0) return;  // 60% chance NPC posts each chat tick
 
   const eligible = NPC_POOL.filter(n => npcCanPost(n.id));
   if(eligible.length === 0) return;
@@ -1509,8 +1508,8 @@ function startGame(){
   buildChat();
   enterPhase("choose");
   startTicks();
-  fetchYahooNews();
-  setInterval(fetchYahooNews,120000);
+  fetchRealNews();
+  setInterval(fetchRealNews,300000);
   // ads
   try{googletag.display("adBanner")}catch(e){}
 }
@@ -1562,7 +1561,7 @@ function startTicks(){
   if(TICK)clearInterval(TICK);
   TICK=setInterval(tick,1000);
   if(NEWS_TICK)clearInterval(NEWS_TICK);
-  NEWS_TICK=setInterval(tickNews,4000);
+  NEWS_TICK=setInterval(tickNews,300000); // every 5 minutes
   if(CHAT_TICK)clearInterval(CHAT_TICK);
   CHAT_TICK=setInterval(tickChat,6000);
 }
@@ -1604,44 +1603,69 @@ function tick(){
   // Risk events
   if(G.phase!=="choose")maybeRiskEvent();
   setHud();
+  renderPositions();
   renderWatchlist();
   renderBook();
   if(G.selected)drawChart(G.selected);
 }
 
-let yfNewsCache=[];
-let yfNewsIdx=0;
-async function fetchYahooNews(){
+let newsCache=[];
+let newsCacheIdx=0;
+let lastNewsFetch=0;
+const NEWS_FETCH_INTERVAL=300000; // 5 minutes
+
+async function fetchRealNews(){
   if(!G)return;
   try{
-    const res=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent("https://query1.finance.yahoo.com/v1/finance/search?q=stocks+market&lang=en-US&region=US&count=20"));
+    // Try WSJ RSS feed via allorigins proxy
+    const res=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent("https://feeds.a.dj.com/rss/RSSMarketsMain.xml"),{signal:AbortSignal.timeout(8000)});
     if(!res.ok)throw new Error("bad response");
-    const data=await res.json();
-    yfNewsCache=(data.news||[]).map(n=>({
-      text:n.title||"",
-      tag:"neutral",
-      impact:0,
-      asset:null,
-      industry:null,
-      heat:0,
-      source:"Yahoo Finance"
-    }));
-    yfNewsIdx=0;
-  }catch(e){yfNewsCache=[];}
+    const text=await res.text();
+    const parser=new DOMParser();
+    const doc=parser.parseFromString(text,"text/xml");
+    const items=doc.querySelectorAll("item");
+    newsCache=[];
+    items.forEach(item=>{
+      const title=item.querySelector("title")?.textContent||"";
+      if(title&&title!=="WSJ.com: Markets"){
+        newsCache.push({
+          text:title,
+          tag:"neutral",
+          impact:0,
+          asset:null,
+          industry:null,
+          heat:0,
+          source:"WSJ"
+        });
+      }
+    });
+    newsCacheIdx=0;
+    lastNewsFetch=Date.now();
+  }catch(e){
+    // Fallback: if no real news, use template
+    newsCache=[];
+  }
+}
+
+function getRealNews(){
+  if(newsCache.length>0&&newsCacheIdx<newsCache.length){
+    return newsCache[newsCacheIdx++];
+  }
+  return null;
 }
 function tickNews(){
   if(!G||G.paused||G.phase==="choose")return;
   if(G.newsCooldown>0)return;
-  if(rng()>.50)return;
-  // Try Yahoo Finance cached news first
-  if(yfNewsCache.length>0&&yfNewsIdx<yfNewsCache.length){
-    const ev=yfNewsCache[yfNewsIdx++];
-    if(ev.text){
-      addNews(ev,"");
-      renderWatchlist();
-      if(G.selected)drawChart(G.selected);
-      return;
-    }
+  // Try real news first (WSJ RSS, fetched every 5 min)
+  if(Date.now()-lastNewsFetch>NEWS_FETCH_INTERVAL||(newsCache.length===0&&Date.now()-lastNewsFetch>60000)){
+    fetchRealNews();
+  }
+  const realEv=getRealNews();
+  if(realEv){
+    addNews(realEv,"");
+    renderWatchlist();
+    if(G.selected)drawChart(G.selected);
+    return;
   }
   // Fall back to template news
   const lvl=LEVELS[G.level-1];
