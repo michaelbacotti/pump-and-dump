@@ -1313,9 +1313,9 @@ const NPC_POOL = [
 ];
 
 // NPC personality state — initialize all NPCs to can-post-immediately
+const NPC_COOLDOWN = 3; // 3 ticks (3 seconds) between same NPC
 let npcLastPost = {};
 NPC_POOL.forEach(n => npcLastPost[n.id] = -NPC_COOLDOWN);
-const NPC_COOLDOWN = 3; // 3 ticks (3 seconds) between same NPC
 
 function pickRandomNpcMsg(npc, asset){
   const msgs = npc.msgs;
