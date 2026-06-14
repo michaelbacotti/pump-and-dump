@@ -1561,7 +1561,7 @@ function startTicks(){
   if(TICK)clearInterval(TICK);
   TICK=setInterval(tick,1000);
   if(NEWS_TICK)clearInterval(NEWS_TICK);
-  NEWS_TICK=setInterval(tickNews,300000); // every 5 minutes
+  NEWS_TICK=setInterval(tickNews,60000); // every 60 seconds
   if(CHAT_TICK)clearInterval(CHAT_TICK);
   CHAT_TICK=setInterval(tickChat,6000);
 }
@@ -1612,7 +1612,7 @@ function tick(){
 let newsCache=[];
 let newsCacheIdx=0;
 let lastNewsFetch=0;
-const NEWS_FETCH_INTERVAL=300000; // 5 minutes
+const NEWS_FETCH_INTERVAL=300000; // 5 minutes (real news)
 
 async function fetchRealNews(){
   if(!G)return;
@@ -1667,10 +1667,11 @@ function tickNews(){
     if(G.selected)drawChart(G.selected);
     return;
   }
-  // Fall back to template news
+  // Fall back to template news (game events)
   const lvl=LEVELS[G.level-1];
   const avail=NEWS_TEMPLATES.filter(n=>n.industry&&(n.industry==="gold"||n.industry==="oil"?G.level>=4:true));
   if(avail.length===0)return;
+  if(rng()>.40)return; // 40% chance to post template news each tick
   const ev=pick(avail);
   // Apply to relevant assets
   if(ev.asset){
