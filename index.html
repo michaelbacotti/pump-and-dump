@@ -1671,9 +1671,10 @@ function getRealNews(){
   }
   return null;
 }
+let _debugTickNews = [];
 function tickNews(){
-  if(!G||G.paused||G.phase==="choose")return;
-  if(G.newsCooldown>0)return;
+  if(!G||G.paused||G.phase==="choose"){_debugTickNews.push({t:G.tick||0,phase:G.phase||'n/a',r:'choose-phase'});return;}
+  if(G.newsCooldown>0){_debugTickNews.push({t:G.tick||0,r:'cooldown'});return;}
   // Try real news first (WSJ RSS, fetched every 5 min)
   if(Date.now()-lastNewsFetch>NEWS_FETCH_INTERVAL||(newsCache.length===0&&Date.now()-lastNewsFetch>60000)){
     fetchRealNews();
@@ -1689,9 +1690,9 @@ function tickNews(){
   const lvl=LEVELS[G.level-1];
   const avail=NEWS_TEMPLATES.filter(n=>n.industry&&(n.industry==="gold"||n.industry==="oil"?G.level>=4:true));
   if(avail.length===0)return;
-  if(rng()>.40)return; // 40% chance to post template news each tick
+  if(rng()>.40){_debugTickNews.push({t:G.tick||0,r:'rng-skip'});return;} // 40% chance to post template news each tick
   const ev=pick(avail);
-  // Apply to relevant assets
+  _debugTickNews.push({t:G.tick||0,r:'template',ev:ev?.text?.substring(0,50)});
   if(ev.asset){
     const a=G.assets[ev.asset];
     if(a){a.price*=1+ev.impact;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);a.change=ev.impact*100;a.hype=Math.min(100,a.hype+Math.abs(ev.impact)*50);}
