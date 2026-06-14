@@ -546,6 +546,17 @@ body{
 .pos-tag.long{background:rgba(0,201,122,.2);color:var(--green)}
 .pos-tag.short{background:rgba(232,58,88,.2);color:var(--red)}
 .order-btn.short{background:rgba(232,58,88,.15);color:var(--red);border-color:rgba(232,58,88,.3)}
+.inf-panel{background:var(--bg-1);border-top:1px solid var(--border);flex-shrink:0}
+.inf-list{padding:8px;display:flex;flex-direction:column;gap:6px}
+.inf-card{display:flex;align-items:center;gap:8px;background:var(--bg-2);border-radius:var(--radius);padding:8px 10px;border:1px solid var(--border)}
+.inf-card .inf-avatar{font-size:20px;flex-shrink:0}
+.inf-card .inf-info{flex:1;min-width:0}
+.inf-card .inf-name{font-size:11px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inf-card .inf-fl{font-size:10px;color:var(--text-mute)}
+.inf-card .inf-cost{font-size:11px;color:var(--gold);font-weight:600}
+.inf-card .inf-hire{background:var(--bg-3);border:1px solid var(--border);border-radius:4px;padding:3px 10px;font-size:10px;color:var(--text);cursor:pointer;white-space:nowrap}
+.inf-card .inf-hire:hover{background:var(--bg-4)}
+.inf-card .inf-hire.hired,.inf-card .inf-hire.cooldown{opacity:.4;cursor:not-allowed}
 
 /* P&L STRIP */
 .pl-strip{
@@ -807,6 +818,8 @@ body{
     </div>
     <div class="topbar-hud">
       <div class="hud-stat"><span class="lbl">Cash</span><span class="val g" id="hudCash">$0</span></div>
+      <div class="hud-stat"><span class="lbl">Buying Power</span><span class="val blue" id="hudBuying">$0</span></div>
+      <div class="hud-stat"><span class="lbl">Available</span><span class="val" id="hudAvailable">$0</span></div>
       <div class="hud-stat"><span class="lbl">Net Worth</span><span class="val" id="hudNet">$0</span></div>
       <div class="hud-stat"><span class="lbl">Unreal. P/L</span><span class="val" id="hudUpnl">$0</span></div>
       <div class="hud-stat"><span class="lbl">Heat</span><span class="val orange" id="hudHeat">0%</span></div>
@@ -901,6 +914,14 @@ body{
         </div>
       </div>
 
+      <!-- INFLUENCERS -->
+      <div class="inf-panel" id="infPanel">
+        <div class="col-header" style="border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+          <span>🤝 Influencers</span>
+        </div>
+        <div class="inf-list" id="infList"></div>
+      </div>
+
       <!-- ORDER BOOK -->
       <div class="book-panel" id="bookPanel">
         <div class="book-side bid">
@@ -926,6 +947,7 @@ body{
     <div class="col col-chat">
       <div class="col-header">
         <span>💼 Positions & P/L</span>
+        <button onclick="closeAllPositions()" style="font-size:10px;padding:2px 8px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-mute);border-radius:4px;cursor:pointer">Close All</button>
       </div>
       <div class="pl-strip">
         <div class="pl-cell"><span class="lbl">Day P/L</span><span class="val g" id="plDay">$0</span></div>
@@ -940,6 +962,7 @@ body{
               <th>Asset</th>
               <th class="right">Shares</th>
               <th class="right">Avg</th>
+              <th class="right">Value</th>
               <th class="right">P/L</th>
             </tr>
           </thead>
@@ -1309,6 +1332,8 @@ function startGame(){
   buildChat();
   enterPhase("choose");
   startTicks();
+  fetchYahooNews();
+  setInterval(fetchYahooNews,120000);
   // ads
   try{googletag.display("adBanner")}catch(e){}
 }
@@ -1353,6 +1378,7 @@ function enterPhase(phase){
   document.getElementById("statTarget").textContent="Target: +"+(lvl.target*100).toFixed(0)+"% net profit";
   if(phase==="choose")G.timer=0;
   setHud();
+  renderInfluencers();
 }
 
 function startTicks(){
@@ -1406,10 +1432,41 @@ function tick(){
   if(G.selected)drawChart(G.selected);
 }
 
+let yfNewsCache=[];
+let yfNewsIdx=0;
+async function fetchYahooNews(){
+  if(!G)return;
+  try{
+    const res=await fetch("https://api.allorigins.win/raw?url="+encodeURIComponent("https://query1.finance.yahoo.com/v1/finance/search?q=stocks+market&lang=en-US&region=US&count=20"));
+    if(!res.ok)throw new Error("bad response");
+    const data=await res.json();
+    yfNewsCache=(data.news||[]).map(n=>({
+      text:n.title||"",
+      tag:"neutral",
+      impact:0,
+      asset:null,
+      industry:null,
+      heat:0,
+      source:"Yahoo Finance"
+    }));
+    yfNewsIdx=0;
+  }catch(e){yfNewsCache=[];}
+}
 function tickNews(){
   if(!G||G.paused||G.phase==="choose")return;
   if(G.newsCooldown>0)return;
-  if(rng()>.55)return;
+  if(rng()>.50)return;
+  // Try Yahoo Finance cached news first
+  if(yfNewsCache.length>0&&yfNewsIdx<yfNewsCache.length){
+    const ev=yfNewsCache[yfNewsIdx++];
+    if(ev.text){
+      addNews(ev,"");
+      renderWatchlist();
+      if(G.selected)drawChart(G.selected);
+      return;
+    }
+  }
+  // Fall back to template news
   const lvl=LEVELS[G.level-1];
   const avail=NEWS_TEMPLATES.filter(n=>n.industry&&(n.industry==="gold"||n.industry==="oil"?G.level>=4:true));
   if(avail.length===0)return;
@@ -1438,11 +1495,27 @@ function tickNews(){
 function tickChat(){
   if(!G||G.paused||G.phase==="choose")return;
   if(G.chatCooldown>0)return;
-  if(rng()>.4)return;
-  const lvl=LEVELS[G.level-1];
-  const tk=G.selected||pick(Object.keys(G.assets));
+  if(rng()>.35)return;
+  const assetKeys=Object.keys(G.assets);
+  if(assetKeys.length===0)return;
+  const tk=pick(assetKeys);
+  const a=G.assets[tk];
   const msg=pick(CHAT_MSGS);
-  addChatMsg({h:msg.h,t:msg.t.replace(/\$TK/g,tk),e:msg.e},"bot");
+  const text=msg.t.replace(/\$TK/g,tk);
+  addChatMsg({h:msg.h,t:text,e:msg.e},"bot");
+  // NPC chat impacts price based on keywords
+  const bullKw=/buy|long|bull|rip|short cover|coiled|breakout|gap|call|loaded|boat|trend|confirm|whale/i.test(text);
+  const bearKw=/short|sell|dump|fire|stop|loss|bear|drop|crash|rug|trap|IV crush/i.test(text);
+  if(bullKw){
+    const imp=a.pumpMult*0.5*(0.5+rng());
+    a.price*=1+imp;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);
+    a.hype=Math.min(100,a.hype+2);
+  } else if(bearKw){
+    const imp=a.pumpMult*0.4*(0.5+rng());
+    a.price*=1-imp;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);
+  }
+  if(G.selected)drawChart(G.selected);
+  renderWatchlist();
 }
 
 function maybeRiskEvent(){
@@ -1842,6 +1915,31 @@ function addChatMsg(m,who){
   body.insertBefore(el,body.firstChild);
   if(body.children.length>60)body.removeChild(body.lastChild);
 }
+function closeAllPositions(){
+  if(!G||G.phase==="end")return;
+  Object.values(G.assets).forEach(a=>{
+    if(a.owned>0){
+      const price=a.bid;
+      const pnl=a.owned*(price-a.avgCost);
+      G.cash+=a.owned*price;
+      G.totalPnl+=pnl;G.dayPnl+=pnl;
+      if(pnl>0)G.wins++;
+      a.owned=0;
+    }
+    if(a.shortQty>0){
+      const price=a.ask;
+      const pnl=a.shortQty*(a.shortAvgCost-price);
+      G.cash-=a.shortQty*price;
+      G.totalPnl+=pnl;G.dayPnl+=pnl;
+      if(pnl>0)G.wins++;
+      a.shortQty=0;
+    }
+  });
+  addNews({text:"🔚 Closed all positions.",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
+  blip(330,.1,"square");
+  setHud();
+  renderPositions();
+}
 function sendChat(){
   const inp=document.getElementById("chatInput");
   const t=inp.value.trim();
@@ -1868,6 +1966,7 @@ function renderPositions(){
       <td><span class="pos-tag ${isShort?"short":"long"}">${tag}</span>${a.tk}</td>
       <td class="right">${fmtNum(qty)}</td>
       <td class="right">${fmt(avgCost,a.price<1?4:2)}</td>
+      <td class="right ${isShort?"red":"g"}">${isShort?"-"+fmt(qty*a.price,2):fmt(qty*a.price,2)}</td>
       <td class="right ${pnl>=0?"green":"red"}">${(pnl>=0?"+":"-")+fmt(Math.abs(pnl),2)}</td>
     `;
     tr.onclick=()=>selectAsset(a.tk);
@@ -1875,20 +1974,52 @@ function renderPositions(){
   });
   if(tbody.children.length===0){
     const tr=document.createElement("tr");
-    tr.innerHTML=`<td colspan="4" class="mute" style="text-align:center;padding:12px">No open positions</td>`;
+    tr.innerHTML=`<td colspan="5" class="mute" style="text-align:center;padding:12px">No open positions</td>`;
     tbody.appendChild(tr);
   }
+}
+
+function renderInfluencers(){
+  const list=document.getElementById("infList");
+  if(!list)return;
+  const infs=INFLUENCERS[G.level-1]||[];
+  list.innerHTML="";
+  infs.forEach((inf,i)=>{
+    const isHired=G.hired.has(i);
+    const onCooldown=isHired&&G.tick-(G.hiredTime[i]||0)<20;
+    const canAfford=G.cash>=inf.cost;
+    const card=document.createElement("div");
+    card.className="inf-card";
+    card.innerHTML=`
+      <div class="inf-avatar">${inf.em}</div>
+      <div class="inf-info">
+        <div class="inf-name">${inf.nm}</div>
+        <div class="inf-fl">${inf.fl} followers</div>
+      </div>
+      <div class="inf-cost">$${inf.cost}</div>
+      <button class="inf-hire ${isHired?"hired":onCooldown?"cooldown":""}"
+        ${!canAfford||onCooldown?"disabled":""}
+        onclick="hireInf(${i})">
+        ${isHired?"Hired":onCooldown?"Cooldown":!canAfford?"Can't Afford":"Hire"}
+      </button>
+    `;
+    list.appendChild(card);
+  });
 }
 
 // ---- HUD ----
 function setHud(){
   if(!G)return;
   const lvl=LEVELS[G.level-1];
-  const netWorth=G.cash+Object.values(G.assets).reduce((s,a)=>s+a.owned*a.price,0);
-  const upnl=Object.values(G.assets).reduce((s,a)=>s+a.owned*(a.price-a.avgCost),0);
+  const longVal=Object.values(G.assets).reduce((s,a)=>s+a.owned*a.price,0);
+  const shortCost=Object.values(G.assets).reduce((s,a)=>s+a.shortQty*a.price,0);
+  const netWorth=G.cash+longVal-shortCost;
+  const upnl=Object.values(G.assets).reduce((s,a)=>s+a.owned*(a.price-a.avgCost),0)+Object.values(G.assets).reduce((s,a)=>s+a.shortQty*(a.shortAvgCost-a.price),0);
   document.getElementById("hudCash").textContent=fmt(G.cash,0);
   document.getElementById("hudNet").textContent=fmt(netWorth,0);
   document.getElementById("hudUpnl").textContent=(upnl>=0?"+":"")+fmt(upnl,0);
+  document.getElementById("hudBuying").textContent=fmt(G.cash,0);
+  document.getElementById("hudAvailable").textContent=fmt(G.cash,0);
   document.getElementById("hudUpnl").className="val "+(upnl>=0?"g":"r");
   document.getElementById("hudHeat").textContent=G.heat.toFixed(0)+"%";
   document.getElementById("hudHeat").style.color=G.heat>60?"var(--red)":G.heat>30?"var(--orange)":"var(--orange)";
@@ -1990,6 +2121,7 @@ function replayLevel(){
   addNews({text:"━━━ Level "+G.level+" — "+LEVELS[G.level-1].name+" ━━━  Bankroll: "+fmt(G.cash,0)+"  Target: +"+(LEVELS[G.level-1].target*100).toFixed(0)+"%",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
   blip(400,.15,"sine");
   setHud();
+  renderInfluencers();
 }
 function nextLevel(){
   closeModal();
