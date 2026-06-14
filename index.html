@@ -1797,6 +1797,7 @@ function placeShort(){
   blip(330,.1,"sawtooth");
   setHud();
   renderPositions();
+  updateOrderButtons();
 }
 function placeSell(){
   if(!G||!G.selected||G.phase==="end")return;
@@ -2168,6 +2169,7 @@ function closeAllPositions(){
   blip(330,.1,"square");
   setHud();
   renderPositions();
+  updateOrderButtons();
 }
 function sendChat(){
   const inp=document.getElementById("chatInput");
