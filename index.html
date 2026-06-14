@@ -546,7 +546,7 @@ body{
 .pos-tag.long{background:rgba(0,201,122,.2);color:var(--green)}
 .pos-tag.short{background:rgba(232,58,88,.2);color:var(--red)}
 .order-btn.short{background:rgba(232,58,88,.15);color:var(--red);border-color:rgba(232,58,88,.3)}
-.inf-panel{background:var(--bg-1);border-top:1px solid var(--border);flex-shrink:0}
+.inf-panel{background:var(--bg-1);border-top:1px solid var(--border);flex-shrink:0;max-height:220px;overflow-y:auto}
 .inf-list{padding:8px;display:flex;flex-direction:column;gap:6px}
 .inf-card{display:flex;align-items:center;gap:8px;background:var(--bg-2);border-radius:var(--radius);padding:8px 10px;border:1px solid var(--border)}
 .inf-card .inf-avatar{font-size:20px;flex-shrink:0}
@@ -590,6 +590,7 @@ body{
 .chat-msg.you .handle{color:var(--gold)}
 .chat-msg.sys .handle{color:var(--red)}
 .chat-msg .emoji{font-size:13px}
+.chat-msg .avatar{margin-right:5px;font-size:15px;vertical-align:middle}
 .chat-input-row{
   display:flex;
   gap:4px;
@@ -1161,33 +1162,209 @@ const NEWS_TEMPLATES = [
 ];
 
 // ---- CHAT MESSAGES (simulated retail traders) ----
-const CHAT_MSGS = [
-  {h:"@chartwatcher",t:"$TK looking coiled. Tightening Bollinger bands.",e:"📊"},
-  {h:"@traderjoe",t:"Just loaded the boat on $TK. Let's go.",e:"🚀"},
-  {h:"@bearTraps",t:"$TK is a dumpster fire. Short it.",e:"🐻"},
-  {h:"@diamondhandsx",t:"Not selling. Ever. $TK to infinity.",e:"💎"},
-  {h:"@flowalgo",t:"Algo buying detected in $TK. Large lot, ask side.",e:"🤖"},
-  {h:"@pumpitninja",t:"$TK gapping up on news. Riding the spike.",e:"🔥"},
-  {h:"@contrarian99",t:"Everyone is wrong. $TK is the trade here.",e:"👀"},
-  {h:"@finviz",t:"$TK unusual options activity. 10k Dec 20 calls bought.",e:"📈"},
-  {h:"@nightcrawler",t:"$TK making a move. 200-day MA breakout.",e:"🌙"},
-  {h:"@wsb_anon",t:"YOLO $TK 500 shares at $0.03. See you at $0.30.",e:"💪"},
-  {h:"@sellsidepaul",t:"$TK initiator here. Price target $0.15. Buy.",e:"🎯"},
-  {h:"@volatility_vic",t:"IV on $TK options is 120%. That premium tho.",e:"📊"},
-  {h:"@trendrider",t:"$TK in a clean uptrend. Higher highs, higher lows.",e:"📈"},
-  {h:"@stoppedout",t:"Got stopped out of $TK at a loss. Back in at $0.02.",e:"😭"},
-  {h:"@level2lis",t:"$TK bid wall at $0.04 is massive. Someone is defending.",e:"🏰"},
-  {h:"@marketpsych",t:"Fear and greed index for $TK at 72. Getting greedy.",e:"😰"},
-  {h:"@scalpmaster",t:"Made 3x on $TK today. In and out. Discipline.",e:"⚡"},
-  {h:"@valueinvestor",t:"$TK at 0.5x book value. Insane entry point.",e:"📖"},
-  {h:"@momentum_mary",t:"$TK broke resistance. Volume confirming.",e:"📊"},
-  {h:"@fintwit",t:"$TK is trending on StockTwits. Retail is waking up.",e:"📣"},
-  {h:"@bullflag",t:"$TK forming bull flag on the daily. Target $0.10.",e:"🚩"},
-  {h:"@whalewatcher",t:"Whale alert: 500M $TK moved to Binance.",e:"🐋"},
-  {h:"@sectorrotation",t:"Money rotating out of tech into $TK. Sector play.",e:"🔄"},
-  {h:"@earningspreview",t:"$TK earnings next week. IV crush incoming.",e:"📅"},
-  {h:"@darkpool",t:"$TK dark pool print: 2M shares at $0.035.",e:"🌑"},
+// ---- NPC PERSONALITIES ----
+// 8 named traders with distinct personalities, biases, and asset preferences
+const NPC_POOL = [
+  {
+    id:"diamondhands", name:"💎 DiamondHands", avatar:"💎",
+    followerCount:"2.1M", bias:"bull", confidence:0.85,
+    style:"Long-term HODLer. Never sells. All bullish.",
+    assets:null,
+    msgs:[
+      "Just accumulated more $TK. Not selling. Ever.",
+      "$TK is a generational opportunity. Stop overthinking.",
+      "The dip on $TK is a gift. I bought the floor.",
+      "HODLing $TK through everything. Market noise is irrelevant.",
+      "My $TK position is my savings account. Nocoiners BTFO.",
+      "$TK fundamentals are solid. Ignore the charts.",
+      "Been in $TK since the beginning. Still buying.",
+      "Stop checking the price. Go outside. $TK is fine.",
+      "Wealth is built by holding $TK. Everything else is noise.",
+      "My cost average on $TK is a state secret.",
+    ]
+  },
+  {
+    id:"papapump", name:"📈 PapaPump", avatar:"🎅",
+    followerCount:"4.7M", bias:"bull", confidence:0.75,
+    style:"Parental bullish cheerleader. Motivational. Oversimplifies everything.",
+    assets:null,
+    msgs:[
+      "My son, $TK is your destiny. Buy now.",
+      "I have never lost. $TK will prove it again.",
+      "Patience. The market rewards patience. $TK is patience.",
+      "Stop being afraid. $TK is calling you home.",
+      "I told you about $TK. Did you listen? Now look.",
+      "Every correction is a chance to buy $TK. You're welcome.",
+      "My grandson, $TK is freedom. Financial freedom.",
+      "I never lie. $TK is going up. This is not financial advice.",
+      "The paper hands suffer. The diamond hands prosper. $TK.",
+      "You had the same opportunity. Now you have $TK.",
+    ]
+  },
+  {
+    id:"nightowl", name:"🦉 NightOwl", avatar:"🦉",
+    followerCount:"1.8M", bias:"neutral", confidence:0.60,
+    style:"After-hours and pre-market trader. Data-driven. Watches everything.",
+    assets:null,
+    msgs:[
+      "After-hours volume on $TK is 3x average. Interesting.",
+      "AH action on $TK: someone is positioning.",
+      "Pre-market futures don't lie. $TK watching closely.",
+      "Overnight gap on $TK. Level to watch: support at $TK_PRICE.",
+      "Scanner picked up unusual activity in $TK. Digging deeper.",
+      "AH mover alert: $TK up/down on low float.",
+      "Overnight session on $TK. Smart money moving.",
+      "Level 2 on $TK shows hidden bids. Whale activity?",
+      "Who's awake? $TK making a move after hours.",
+      "The tape doesn't lie. $TK print is clean.",
+    ]
+  },
+  {
+    id:"whalealert", name:"🐋 WhaleAlert", avatar:"🐋",
+    followerCount:"3.2M", bias:"neutral", confidence:0.70,
+    style:"Tracks big money moves. Options flow. Institutional activity.",
+    assets:null,
+    msgs:[
+      "🐋 Big player opened $TK position. 500K shares.",
+      "🐋 Options flow alert: $TK 10M calls bought.",
+      "🐋 Dark pool print: $TK 2M shares at ask.",
+      "🐋 Unknown wallet been accumulating $TK for weeks.",
+      "🐋 Cost basis on $TK suggests institutional entry.",
+      "🐋 $TK options gamma squeeze setup forming.",
+      "🐋 Smart money alert: $TK large block traded.",
+      "🐋 $TK put/call ratio spiking. Unusual activity.",
+      "🐋 $TK whale alert: 3x average volume.",
+      "🐋 Algo detected: $TK large order routing.",
+    ]
+  },
+  {
+    id:"alphatrades", name:"⚡ AlphaTrades", avatar:"⚡",
+    followerCount:"1.5M", bias:"bull", confidence:0.80,
+    style:"Technical analysis addict. Patterns, breakouts, momentum.",
+    assets:null,
+    msgs:[
+      "$TK cup and handle forming. Target: +40% from neckline.",
+      "Volume surge on $TK. Chart is screaming.",
+      "$TK broke resistance. Clean breakout. Riding it.",
+      "My TA doesn't lie. $TK forming ascending triangle.",
+      "Bollinger Band squeeze on $TK. Explosion incoming.",
+      "$TK RSI divergence positive. Momentum building.",
+      "My algo is long $TK. System doesn't make mistakes.",
+      "The chart on $TK is a thing of beauty. BUY.",
+      "$TK MACD crossover. Histogram turning positive.",
+      "Fibonacci on $TK: 78.6% retrace完美. Entry city.",
+    ]
+  },
+  {
+    id:"cryptoking", name:"🟢 CryptoKing", avatar:"🟢",
+    followerCount:"900K", bias:"bull", confidence:0.75,
+    style:"Meme coin and crypto trader. YOLO energy. Gambler.",
+    assets:["$WOJAK","$PEPE2","$DOGEX"],
+    msgs:[
+      "YOLO update: +$TK%. Still holding. Never selling.",
+      "This is the way. $TK to the moon. 🚀",
+      "Just aped into $TK. Life changing opportunity.",
+      "$TK is not a coin it's a LIFESTYLE.",
+      "My wife's boyfriend thinks I'm wrong about $TK. I laugh.",
+      "Diamond hands. Iron hands. $TK hands.",
+      "Just bought more $TK with my rent money. JOKING. (maybe).",
+      "Rug pull fears are for cowards. $TK is different.",
+      "Wen moon? $TK answering: SOON.",
+      "My $TK bag is HEAVY. I am not sad.",
+    ]
+  },
+  {
+    id:"beartrap", name:"🐻 BearTrap", avatar:"🐻",
+    followerCount:"700K", bias:"bear", confidence:0.70,
+    style:"Contrarian bear. Calls tops. Aggressive. Often wrong but loud.",
+    assets:null,
+    msgs:[
+      "$TK about to dump. Get out now. I mean it.",
+      "This is the top. I called it. $TK you're welcome.",
+      "Stop buying $TK. The smart money is already out.",
+      "Resistance at $TK_PRICE. This rejects every time.",
+      "$TK is a trap. Paper hands getting crushed.",
+      "My short on $TK is looking brilliant. More to come.",
+      "Told you. $TKdump incoming. Who listened? Nobody. 😤",
+      "Volume declining on $TK. Top is in. Trust me.",
+      "SEC looking at $TK. Don't be the last one holding.",
+      "The hype on $TK is the exit liquidity. Remember my words.",
+    ]
+  },
+  {
+    id:"paprikatrade", name:"🌶️ PaprikaTrade", avatar:"🌶️",
+    followerCount:"600K", bias:"bull", confidence:0.65,
+    style:"Spicy energy. Hot takes. YOLO calls. Small follower count, big opinions.",
+    assets:["$BIOQ","$CURE","$GLIO"],
+    msgs:[
+      "My gut on $TK is SCREAMING buy. Trust it.",
+      "Leaked info from a friend of a friend: $TK news tomorrow.",
+      "I don't do DD. I feel it. $TK is the one.",
+      "Warming up on $TK. Something special coming.",
+      "My scanner is on fire. $TK just lit up.",
+      "Small cap gems: $TK is the play. I won't be wrong.",
+      "YOLO on $TK. If I'm wrong I'm wrong. Going big.",
+      "Sometimes you just gotta trust $TK. This is one of those times.",
+      "My hot take: $TK 10x by end of month. Let's go.",
+      "The fundamentals don't matter. The feeling matters. $TK feeling: 🔥",
+    ]
+  },
 ];
+
+// NPC personality state
+let npcLastPost = {};
+const NPC_COOLDOWN = 8;
+
+function pickRandomNpcMsg(npc, asset){
+  const msgs = npc.msgs;
+  const msg = msgs[Math.floor(Math.random() * msgs.length)];
+  return msg.replace(/\$TK/g, asset);
+}
+
+function npcCanPost(npcId){
+  const last = npcLastPost[npcId] || 0;
+  return (G.tick - last) >= NPC_COOLDOWN;
+}
+
+function tickNpcChat(){
+  if(!G || G.paused || G.phase === "choose") return;
+  if(G.chatCooldown > 0) return;
+  if(Math.random() > 0.30) return;
+
+  const eligible = NPC_POOL.filter(n => npcCanPost(n.id));
+  if(eligible.length === 0) return;
+
+  const npc = eligible[Math.floor(Math.random() * eligible.length)];
+
+  let asset;
+  if(npc.assets && npc.assets.length > 0 && Math.random() < 0.5){
+    asset = npc.assets[Math.floor(Math.random() * npc.assets.length)];
+  } else {
+    const keys = Object.keys(G.assets);
+    asset = G.selected || keys[Math.floor(Math.random() * keys.length)];
+  }
+
+  const text = pickRandomNpcMsg(npc, asset);
+  addChatMsg({h: npc.name, t: text, e: npc.followerCount, avatar: npc.avatar}, "bot");
+  npcLastPost[npc.id] = G.tick;
+
+  const a = G.assets[asset];
+  if(!a) return;
+  if(npc.bias === "bull"){
+    const imp = a.pumpMult * 0.3 * Math.random();
+    a.price *= (1 + imp);
+    a.bid = a.price * (1 - a.vol * 0.28);
+    a.ask = a.price * (1 + a.vol * 0.28);
+    a.hype = Math.min(100, a.hype + 1.5);
+  } else if(npc.bias === "bear"){
+    const imp = a.pumpMult * 0.25 * Math.random();
+    a.price *= (1 - imp);
+    a.bid = a.price * (1 - a.vol * 0.28);
+    a.ask = a.price * (1 + a.vol * 0.28);
+  }
+  if(G.selected) drawChart(G.selected);
+  renderWatchlist();
+}
 
 // ---- INFLUENCERS ----
 const INFLUENCERS = [
@@ -1493,29 +1670,7 @@ function tickNews(){
 }
 
 function tickChat(){
-  if(!G||G.paused||G.phase==="choose")return;
-  if(G.chatCooldown>0)return;
-  if(rng()>.35)return;
-  const assetKeys=Object.keys(G.assets);
-  if(assetKeys.length===0)return;
-  const tk=pick(assetKeys);
-  const a=G.assets[tk];
-  const msg=pick(CHAT_MSGS);
-  const text=msg.t.replace(/\$TK/g,tk);
-  addChatMsg({h:msg.h,t:text,e:msg.e},"bot");
-  // NPC chat impacts price based on keywords
-  const bullKw=/buy|long|bull|rip|short cover|coiled|breakout|gap|call|loaded|boat|trend|confirm|whale/i.test(text);
-  const bearKw=/short|sell|dump|fire|stop|loss|bear|drop|crash|rug|trap|IV crush/i.test(text);
-  if(bullKw){
-    const imp=a.pumpMult*0.5*(0.5+rng());
-    a.price*=1+imp;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);
-    a.hype=Math.min(100,a.hype+2);
-  } else if(bearKw){
-    const imp=a.pumpMult*0.4*(0.5+rng());
-    a.price*=1-imp;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);
-  }
-  if(G.selected)drawChart(G.selected);
-  renderWatchlist();
+  tickNpcChat();
 }
 
 function maybeRiskEvent(){
@@ -1686,7 +1841,7 @@ function hireInf(i){
   setTimeout(()=>{
     if(!G)return;
     publishPost(hook+" "+em,a);
-    addChatMsg({h:inf.nm,t:hook+" "+em,e:inf.em},"bot");
+    addChatMsg({h:inf.nm,t:hook+" "+em,e:inf.em,avatar:inf.em},"bot");
   },1500+rng()*2000);
   addNews({text:"✅ Hired "+inf.nm+" ("+inf.fl+" followers).",tag:"social",impact:0,asset:null,industry:null,heat:inf.heat},"you");
   blip(560,.1,"triangle");
@@ -1911,7 +2066,8 @@ function addChatMsg(m,who){
   const body=document.getElementById("chatBody");
   const el=document.createElement("div");
   el.className="chat-msg "+who;
-  el.innerHTML=`<span class="handle">${esc(m.h)}</span><span class="ts">${new Date().toLocaleTimeString()}</span><div class="txt">${m.e||""} ${esc(m.t)}</div>`;
+  const avatar= m.avatar||(m.e||"");
+  el.innerHTML=`<span class="avatar">${avatar}</span><span class="handle">${esc(m.h)}</span><span class="ts">${new Date().toLocaleTimeString()}</span><div class="txt">${esc(m.t)}</div>`;
   body.insertBefore(el,body.firstChild);
   if(body.children.length>60)body.removeChild(body.lastChild);
 }
