@@ -546,6 +546,7 @@ body{
 .pos-tag.long{background:rgba(0,201,122,.2);color:var(--green)}
 .pos-tag.short{background:rgba(232,58,88,.2);color:var(--red)}
 .order-btn.short{background:rgba(232,58,88,.15);color:var(--red);border-color:rgba(232,58,88,.3)}
+.order-btn.cover{background:rgba(58,134,255,.12);color:var(--blue);border:1px solid rgba(58,134,255,.3)}
 .inf-panel{background:var(--bg-1);border-top:1px solid var(--border);flex-shrink:0;max-height:220px;overflow-y:auto}
 .inf-list{padding:8px;display:flex;flex-direction:column;gap:6px}
 .inf-card{display:flex;align-items:center;gap:8px;background:var(--bg-2);border-radius:var(--radius);padding:8px 10px;border:1px solid var(--border)}
@@ -687,6 +688,7 @@ body{
   transition:all .15s;
 }
 .modal .btn-row .btn.gold{background:var(--gold);color:#1a1000}
+.version-tag{font-size:11px;background:var(--bg-3);color:var(--text-mute);padding:2px 6px;border-radius:4px;vertical-align:middle;font-weight:400}
 .modal .btn-row .btn.ghost{background:transparent;border:1px solid var(--border);color:var(--text-dim)}
 
 /* INTRO SCREEN */
@@ -773,7 +775,7 @@ body{
 <!-- INTRO SCREEN -->
 <div id="introScreen" class="intro-screen">
   <div class="intro-card">
-    <h1>📈 Pump & Dump</h1>
+    <h1>📈 Pump & Dump <span class="version-tag">v2.10</span></h1>
     <p class="tagline">A satirical trading-scheme simulator.<br>Buy. Tweet. Dump. Profit. <span class="mute">(Don't get arrested.)</span></p>
     <div class="badges">
       <span class="badge">📊 Live Order Book</span>
@@ -912,6 +914,7 @@ body{
           <button class="order-btn buy" id="btnBuy" onclick="placeBuy()">Buy</button>
           <button class="order-btn sell" id="btnSell" onclick="placeSell()">Sell</button>
           <button class="order-btn short" id="btnShort" onclick="placeShort()">Short</button>
+          <button class="order-btn cover" id="btnCover" onclick="placeBuyToClose()" style="display:none;background:rgba(58,134,255,.12);color:var(--blue);border:1px solid rgba(58,134,255,.3)">Buy to Close</button>
         </div>
       </div>
 
@@ -1559,13 +1562,16 @@ function enterPhase(phase){
   renderInfluencers();
 }
 
+let newsTickCounter = 0;
+let chatTickCounter = 0;
 function startTicks(){
   if(TICK)clearInterval(TICK);
   TICK=setInterval(tick,1000);
   if(NEWS_TICK)clearInterval(NEWS_TICK);
-  NEWS_TICK=setInterval(tickNews,60000); // every 60 seconds
   if(CHAT_TICK)clearInterval(CHAT_TICK);
   CHAT_TICK=setInterval(tickChat,6000);
+  newsTickCounter = 0;
+  chatTickCounter = 0;
 }
 
 function tick(){
@@ -1573,6 +1579,12 @@ function tick(){
   G.tick++;
   G.newsCooldown=Math.max(0,G.newsCooldown-1);
   G.chatCooldown=Math.max(0,G.chatCooldown-1);
+  // Fire news every 30 ticks (30 seconds)
+  newsTickCounter++;
+  if(newsTickCounter >= 30){
+    newsTickCounter = 0;
+    tickNews();
+  }
   // Update all prices
   Object.values(G.assets).forEach(a=>{
     a.prevPrice=a.price;
@@ -1589,6 +1601,10 @@ function tick(){
     G.history[a.tk].push({t:G.tick,p:a.price});
     if(G.history[a.tk].length>500)G.history[a.tk].shift();
   });
+  // Natural heat decay (small amount each tick, unless actively pumping)
+  if(G.heat > 0 && G.phase !== "pump"){
+    G.heat = Math.max(0, G.heat - 0.3);
+  }
   // Timer
   if(["buy","pump","dump"].includes(G.phase)){
     G.timer--;
@@ -1820,6 +1836,7 @@ function placeSell(){
   }
   setHud();
   renderPositions();
+  updateOrderButtons();
 }
 
 // ---- POSTS ----
@@ -1959,6 +1976,7 @@ function selectAsset(tk){
   renderBook();
   drawChart(tk);
   blip(440,.05,"sine");
+  updateOrderButtons();
 }
 
 // ---- RENDER: CHART ----
@@ -2098,6 +2116,34 @@ function addChatMsg(m,who){
   body.insertBefore(el,body.firstChild);
   if(body.children.length>60)body.removeChild(body.lastChild);
 }
+function placeBuyToClose(){
+  if(!G||!G.selected||G.phase==="end")return;
+  const a=G.assets[G.selected];
+  if(!a||a.shortQty<=0)return;
+  const qty=a.shortQty;
+  let price=G.otType==="market"?a.ask:parseFloat(document.getElementById("ordPrice").value)||a.ask;
+  if(price<=0)price=a.ask;
+  const cost=qty*price;
+  if(cost>G.cash){addNews({text:"💸 Insufficient cash to cover. Need "+fmt(cost,2)+", have "+fmt(G.cash,2)+".",tag:"bear",impact:0,asset:null,industry:null,heat:0},"sys");return;}
+  const pnl=a.shortQty*(a.shortAvgCost-price);
+  G.cash-=cost;
+  a.shortQty=0;
+  G.trades++;
+  G.totalPnl+=pnl;G.dayPnl+=pnl;
+  if(pnl>0)G.wins++;
+  addNews({text:"🔵 Bought to cover "+qty+" "+a.tk+" @ "+fmt(price,4)+". P/L: "+(pnl>=0?"+":"")+fmt(pnl,2)+".",tag:pnl>=0?"bull":"bear",impact:0,asset:null,industry:null,heat:0},"you");
+  blip(440,.1,"sawtooth");
+  setHud();
+  renderPositions();
+  updateOrderButtons();
+}
+
+function updateOrderButtons(){
+  const a=G.selected&&G.assets[G.selected];
+  const coverBtn=document.getElementById("btnCover");
+  if(coverBtn)coverBtn.style.display=a&&a.shortQty>0?"inline-block":"none";
+}
+
 function closeAllPositions(){
   if(!G||G.phase==="end")return;
   Object.values(G.assets).forEach(a=>{
