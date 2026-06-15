@@ -766,6 +766,134 @@ body{
 ::-webkit-scrollbar-thumb{background:var(--border-2);border-radius:2px}
 ::-webkit-scrollbar-thumb:hover{background:var(--text-mute)}
 
+/* CLOCK + DATE */
+.market-clock{
+  display:flex;align-items:center;gap:6px;
+  padding-left:12px;border-left:1px solid var(--border);
+  flex-shrink:0;
+}
+.market-clock .clock-icon{font-size:12px;color:var(--text-mute)}
+.market-clock .clock-time{
+  font-family:var(--font-mono);font-size:13px;font-weight:600;
+  color:var(--text);letter-spacing:.03em;
+}
+.market-clock .clock-date{
+  font-size:10px;color:var(--text-mute);
+  text-transform:uppercase;letter-spacing:.04em;
+}
+.market-clock .clock-session{
+  font-size:9px;padding:1px 6px;border-radius:2px;
+  font-weight:700;text-transform:uppercase;letter-spacing:.06em;
+  margin-left:2px;
+}
+.market-clock .clock-session.pre{background:rgba(74,90,114,.2);color:var(--text-dim)}
+.market-clock .clock-session.open{background:rgba(0,201,122,.18);color:var(--green)}
+.market-clock .clock-session.close{background:rgba(232,58,88,.18);color:var(--red)}
+
+/* CHART FOOTER (time axis + volume strip) */
+.chart-foot{
+  position:absolute;left:0;right:0;bottom:0;
+  display:flex;align-items:flex-end;
+  pointer-events:none;
+}
+.vol-strip{
+  position:absolute;left:52px;right:56px;
+  height:50px;
+  bottom:18px;
+  opacity:.55;
+}
+.vol-bar{background:rgba(58,142,245,.45);min-height:1px;border-radius:1px 1px 0 0;transition:height .2s}
+.vol-bar.up{background:rgba(0,201,122,.55)}
+.vol-bar.dn{background:rgba(232,58,88,.55)}
+.time-axis{
+  position:absolute;left:52px;right:6px;bottom:2px;
+  height:14px;
+  font-family:var(--font-mono);font-size:9px;color:var(--text-mute);
+}
+.time-axis span{
+  position:absolute;top:0;
+  transform:translateX(-50%);
+  white-space:nowrap;
+}
+.time-axis span:first-child{transform:translateX(0)}
+.time-axis span:last-child{transform:translateX(-100%)}
+
+/* CHART CROSSHAIR + LAST PRICE TAG */
+.crosshair-v,.crosshair-h{position:absolute;background:rgba(255,255,255,.18);pointer-events:none;z-index:5}
+.crosshair-v{width:1px;top:6px;bottom:18px}
+.crosshair-h{height:1px;left:52px;right:6px}
+.last-tag{
+  position:absolute;right:6px;
+  background:var(--green);color:#042818;
+  font-family:var(--font-mono);font-size:10px;font-weight:700;
+  padding:1px 5px;border-radius:2px;z-index:6;
+  transform:translateY(-50%);
+}
+.last-tag.dn{background:var(--red);color:#fff}
+.chart-tooltip{
+  position:absolute;left:8px;top:8px;
+  background:rgba(8,12,20,.85);border:1px solid var(--border-2);
+  border-radius:3px;padding:5px 8px;
+  font-family:var(--font-mono);font-size:10px;color:var(--text-dim);
+  z-index:7;pointer-events:none;min-width:140px;
+}
+.chart-tooltip .tt-time{color:var(--gold);font-weight:700;margin-bottom:2px}
+.chart-tooltip .tt-price{color:var(--text);font-size:12px;font-weight:700}
+.chart-tooltip .tt-chg{font-size:10px}
+
+/* FLASH ANIMATIONS for news/chat arrivals */
+@keyframes flashYellow{0%{background:rgba(240,180,41,.18)}100%{background:transparent}}
+@keyframes flashBlue{0%{background:rgba(58,142,245,.18)}100%{background:transparent}}
+.flash-news{animation:flashYellow .8s ease}
+.flash-chat{animation:flashBlue .6s ease}
+
+/* CHART TOOLBAR (timeframes) */
+.chart-tf{
+  display:flex;gap:1px;align-items:center;
+}
+.chart-tf .tf{
+  font-size:9px;padding:2px 6px;border-radius:2px;
+  background:transparent;color:var(--text-mute);cursor:pointer;
+  font-family:var(--font-mono);border:1px solid transparent;
+}
+.chart-tf .tf.active{background:var(--blue-dim);color:#fff;border-color:var(--blue)}
+.chart-tf .tf:hover{color:var(--text-dim)}
+.chart-tf .tf.active:hover{color:#fff}
+
+/* NEWS COUNT BADGE */
+.news-badge{
+  position:relative;
+}
+.news-badge::after{
+  content:attr(data-count);
+  position:absolute;top:-4px;right:-8px;
+  background:var(--gold);color:#1a1000;
+  font-size:9px;font-weight:700;
+  padding:1px 5px;border-radius:99px;
+  min-width:14px;text-align:center;
+  font-family:var(--font-mono);
+}
+.news-badge[data-count="0"]::after{display:none}
+
+/* SESSION STRIP under topbar */
+.session-strip{
+  display:flex;align-items:center;gap:14px;
+  padding:0 12px;height:18px;
+  background:linear-gradient(90deg,var(--bg-2),var(--bg-3));
+  border-bottom:1px solid var(--border);
+  font-size:9px;color:var(--text-mute);
+  font-family:var(--font-mono);
+  text-transform:uppercase;letter-spacing:.06em;
+  flex-shrink:0;overflow:hidden;
+}
+.session-strip .ss-item{display:flex;align-items:center;gap:4px;flex-shrink:0}
+.session-strip .ss-dot{width:6px;height:6px;border-radius:50%;background:var(--text-mute)}
+.session-strip .ss-dot.live{background:var(--green);box-shadow:0 0 6px rgba(0,201,122,.6);animation:pulse 2s ease infinite}
+.session-strip .ss-sep{color:var(--border-2)}
+
+/* v3.0 version tag (gold) */
+.version-tag{font-size:12px;background:rgba(251,191,36,.15);color:#fbbf24;padding:3px 8px;border-radius:4px;vertical-align:middle;font-weight:700;border:1px solid rgba(251,191,36,.3)}
+
 </style>
 </head>
 <body>
@@ -775,12 +903,13 @@ body{
 <!-- INTRO SCREEN -->
 <div id="introScreen" class="intro-screen">
   <div class="intro-card">
-    <h1>📈 Pump & Dump <span class="version-tag">v2.12</span></h1>
+    <h1>📈 Pump & Dump <span class="version-tag">v3.0</span></h1>
     <p class="tagline">A satirical trading-scheme simulator.<br>Buy. Tweet. Dump. Profit. <span class="mute">(Don't get arrested.)</span></p>
     <div class="badges">
-      <span class="badge">📊 Live Order Book</span>
-      <span class="badge">📰 Industry News</span>
-      <span class="badge">🐦 X Posts</span>
+      <span class="badge">🕒 Live Day Clock</span>
+      <span class="badge">📈 Daily Charts</span>
+      <span class="badge">📰 Live News Feed</span>
+      <span class="badge">🐦 X / Chats</span>
       <span class="badge">👥 Influencers</span>
       <span class="badge">⚠️ Heat Risk</span>
       <span class="badge">🏛️ Gold & Oil</span>
@@ -822,11 +951,18 @@ body{
     <div class="topbar-hud">
       <div class="hud-stat"><span class="lbl">Cash</span><span class="val g" id="hudCash">$0</span></div>
       <div class="hud-stat"><span class="lbl">Buying Power</span><span class="val blue" id="hudBuying">$0</span></div>
-      <div class="hud-stat"><span class="lbl">Available</span><span class="val" id="hudAvailable">$0</span></div>
       <div class="hud-stat"><span class="lbl">Net Worth</span><span class="val" id="hudNet">$0</span></div>
       <div class="hud-stat"><span class="lbl">Unreal. P/L</span><span class="val" id="hudUpnl">$0</span></div>
       <div class="hud-stat"><span class="lbl">Heat</span><span class="val orange" id="hudHeat">0%</span></div>
       <div class="hud-stat"><span class="lbl">Target</span><span class="val gold" id="hudTarget">+50%</span></div>
+    </div>
+    <div class="market-clock">
+      <span class="clock-icon">🕒</span>
+      <div style="display:flex;flex-direction:column;line-height:1.1">
+        <span class="clock-time" id="clockTime">9:30 AM</span>
+        <span class="clock-date" id="clockDate">—</span>
+      </div>
+      <span class="clock-session open" id="clockSession">OPEN</span>
     </div>
     <div class="topbar-timer">
       <span class="phase-pill choose" id="phasePill">CHOOSE</span>
@@ -834,6 +970,18 @@ body{
       <span class="timer-label" id="timerLabel">—</span>
     </div>
   </header>
+
+  <!-- SESSION STRIP (live tape) -->
+  <div class="session-strip" id="sessionStrip">
+    <span class="ss-item"><span class="ss-dot live" id="ssDot"></span><span id="ssStatus">MARKET OPEN</span></span>
+    <span class="ss-sep">|</span>
+    <span class="ss-item">Open <b id="ssOpen" style="color:var(--text-dim);margin-left:2px">9:30 AM</b></span>
+    <span class="ss-item">Close <b id="ssClose" style="color:var(--text-dim);margin-left:2px">4:00 PM</b></span>
+    <span class="ss-sep">|</span>
+    <span class="ss-item">Next event <b id="ssNext" style="color:var(--text);margin-left:2px">—</b></span>
+    <span class="ss-sep">|</span>
+    <span class="ss-item">Speed <b id="ssSpeed" style="color:var(--gold);margin-left:2px">1m/s</b></span>
+  </div>
 
   <!-- AD BANNER -->
   <div class="ad-banner" id="adBanner">
@@ -862,7 +1010,7 @@ body{
       <div class="chart-panel">
         <div class="chart-header-bar">
           <div>
-            <div class="chart-sym" id="chartSym">$FRGE</div>
+            <div class="chart-sym" id="chartSym">$FRGE <span class="chart-tf" style="margin-left:6px"><span class="tf active">1D</span><span class="tf" style="opacity:.4;cursor:default">1W</span><span class="tf" style="opacity:.4;cursor:default">1M</span></span></div>
             <div class="chart-name" id="chartName">Forge NanoTech Inc.</div>
           </div>
           <div class="chart-price-big up" id="chartPrice">$0.0300</div>
@@ -873,8 +1021,20 @@ body{
             <button class="ovl-btn" onclick="setOvls('heat')">Heat</button>
           </div>
         </div>
-        <div class="chart-canvas-wrap">
+        <div class="chart-canvas-wrap" id="chartWrap">
           <canvas id="mainChart"></canvas>
+          <div class="chart-tooltip" id="chartTooltip" style="display:none">
+            <div class="tt-time" id="ttTime">9:30 AM</div>
+            <div class="tt-price" id="ttPrice">$0.00</div>
+            <div class="tt-chg" id="ttChg">+0.00%</div>
+          </div>
+          <div class="last-tag" id="lastTag" style="top:50%">$0.00</div>
+          <div class="crosshair-v" id="crossV" style="display:none"></div>
+          <div class="crosshair-h" id="crossH" style="display:none"></div>
+          <div class="vol-strip" id="volStrip"></div>
+          <div class="time-axis" id="timeAxis">
+            <span>9:30</span><span>10:30</span><span>11:30</span><span>12:30</span><span>1:30</span><span>2:30</span><span>3:30</span><span>4:00</span>
+          </div>
         </div>
         <div class="chart-indicators">
           <span>O<span id="indO">—</span></span>
@@ -942,7 +1102,7 @@ body{
     <!-- COLUMN 3: NEWS + MARKET -->
     <div class="col col-news">
       <div class="col-header">
-        <span>📰 Market News & Events</span>
+        <span class="news-badge" data-count="0" id="newsBadge">📰 Market News & Events</span>
       </div>
       <div class="col-body" id="newsBody"></div>
     </div>
@@ -1333,19 +1493,20 @@ function npcCanPost(npcId){
 
 function tickNpcChat(){
   if(!G || G.paused || G.phase === "choose") return;
-  if(G.chatCooldown > 0) return;  // 60% chance NPC posts each chat tick
+  // Higher post rate now that chat is on a 4s tick.
+  if(rng() > 0.65) return;
 
   const eligible = NPC_POOL.filter(n => npcCanPost(n.id));
   if(eligible.length === 0) return;
 
-  const npc = eligible[Math.floor(Math.random() * eligible.length)];
+  const npc = eligible[Math.floor(rng() * eligible.length)];
 
   let asset;
-  if(npc.assets && npc.assets.length > 0 && Math.random() < 0.5){
-    asset = npc.assets[Math.floor(Math.random() * npc.assets.length)];
+  if(npc.assets && npc.assets.length > 0 && rng() < 0.5){
+    asset = npc.assets[Math.floor(rng() * npc.assets.length)];
   } else {
     const keys = Object.keys(G.assets);
-    asset = G.selected || keys[Math.floor(Math.random() * keys.length)];
+    asset = G.selected || keys[Math.floor(rng() * keys.length)];
   }
 
   const text = pickRandomNpcMsg(npc, asset);
@@ -1355,13 +1516,13 @@ function tickNpcChat(){
   const a = G.assets[asset];
   if(!a) return;
   if(npc.bias === "bull"){
-    const imp = a.pumpMult * 0.3 * Math.random();
+    const imp = a.pumpMult * 0.3 * rng();
     a.price *= (1 + imp);
     a.bid = a.price * (1 - a.vol * 0.28);
     a.ask = a.price * (1 + a.vol * 0.28);
     a.hype = Math.min(100, a.hype + 1.5);
   } else if(npc.bias === "bear"){
-    const imp = a.pumpMult * 0.25 * Math.random();
+    const imp = a.pumpMult * 0.25 * rng();
     a.price *= (1 - imp);
     a.bid = a.price * (1 - a.vol * 0.28);
     a.ask = a.price * (1 + a.vol * 0.28);
@@ -1465,6 +1626,61 @@ function fmtNum(n){
   if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+"K";
   return n.toFixed(2);
 }
+
+// ---- TIME / DATE HELPERS ----
+// Game time is in minutes from midnight ET. 9:30 AM = 570, 4:00 PM = 960.
+// One real second = 1 game minute. Full trading day (6.5h) = ~6.5 min real time.
+const OPEN_MIN  = 9 * 60 + 30;   // 570
+const CLOSE_MIN = 16 * 60;       // 960
+const PREMKT_OPEN = 4 * 60;      // 240
+
+function formatClock(minFromMidnight){
+  let m = Math.floor(minFromMidnight);
+  let h = Math.floor(m / 60) % 24;
+  let mm = m % 60;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
+}
+function formatClockShort(minFromMidnight){
+  let m = Math.floor(minFromMidnight);
+  let h = Math.floor(m / 60) % 24;
+  let mm = m % 60;
+  const ampm = h >= 12 ? 'p' : 'a';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return h12 + ':' + (mm < 10 ? '0' : '') + mm + ampm;
+}
+function formatGameDate(dayOffset){
+  // Game runs on weekdays (Mon-Fri). dayOffset=0 is the most recent business day.
+  // Use a fixed reference date for determinism: 2026-06-15 (Mon).
+  const ref = new Date(2026, 5, 15); // June 15 2026 (Mon)
+  // Walk forward to skip weekends
+  let d = new Date(ref);
+  let added = 0;
+  while (added < dayOffset) {
+    d.setDate(d.getDate() + 1);
+    const dow = d.getDay();
+    if (dow !== 0 && dow !== 6) added++;
+  }
+  const days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return days[d.getDay()] + ', ' + months[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+}
+function getSessionForTime(min){
+  if (min < PREMKT_OPEN) return {label: 'CLOSED', cls: 'pre'};
+  if (min < OPEN_MIN)     return {label: 'PRE', cls: 'pre'};
+  if (min < CLOSE_MIN)    return {label: 'OPEN', cls: 'open'};
+  return {label: 'CLOSE', cls: 'close'};
+}
+function sessionChangePct(a){
+  // Session change since today's open (a.start). Clamped so negatives stay negative.
+  if(!a||!a.start)return 0;
+  return ((a.price / a.start) - 1) * 100;
+}
+function sessionChangeAbs(a){
+  if(!a||!a.start)return 0;
+  return a.price - a.start;
+}
 function esc(s){var q34=String.fromCharCode(34),q39=String.fromCharCode(39);return s.replace(/[&<>"']/g,function(c){if(c==='&')return'&amp;';if(c==='<')return'&lt;';if(c==='>')return'&gt;';if(c===q34)return'&quot;';if(c===q39)return'&#39;';return c})}
 
 // ---- AUDIO ----
@@ -1480,6 +1696,7 @@ function blip(f=440,dur=.06,type="sine",vol=.03){
 }
 
 // ---- START ----
+const GAME_VERSION = "v3.0";
 function startGame(){
   if(AC.state==="suspended")AC.resume();
   rng=mulberry32(Date.now()&0xffffffff);
@@ -1490,7 +1707,7 @@ function startGame(){
     selected:null,
     hype:0,heat:0,
     timer:0,tick:0,
-    history:{}, // tk -> [{t,p}]
+    history:{}, // tk -> [{t,p,v}]
     hired:new Set(),
     hiredTime:{},
     totalPnl:0,dayPnl:0,
@@ -1503,6 +1720,15 @@ function startGame(){
     newsCooldown:0,
     chatCooldown:0,
     paused:false,
+    // game-time
+    gameTimeMin: 9*60+30,         // 9:30 AM ET (market open) at start of round
+    gameDateOffset: 0,            // 0 = Jun 15 2026, +1 = next business day
+    chooseAutoStart: 8,           // ticks (seconds) until auto-start of buy phase
+    newsCount: 0,                 // how many news items this round (for badge)
+    chatCount: 0,
+    lastNewsAsset: null,          // last asset news affected (NPC reacts)
+    lastNewsTime: -10,
+    seedDone: false,              // pre-seed chat/news once
   };
   // Initialize assets for level
   initLevelAssets();
@@ -1515,8 +1741,36 @@ function startGame(){
   startTicks();
   fetchRealNews();
   setInterval(fetchRealNews,300000);
+  preSeedFeed();
   // ads
   try{googletag.display("adBanner")}catch(e){}
+}
+
+// Pre-seed the news + chat panels with 3-5 items so they look alive on first paint.
+function preSeedFeed(){
+  if(!G)return;
+  // Pick a few representative template news from the pool
+  const seedPicks = [
+    {t:"$BIOQ Phase II results due next week. Street bracing for volatility.",tag:"ev",imp:0,asset:null,industry:"biotech",heat:2},
+    {t:"Macro: Fed minutes hint at pause. Rate-sensitives bid.",tag:"gov",imp:0,asset:null,industry:"bluechip",heat:1},
+    {t:"Crypto Twitter buzzing about $WOJAK. Volume spike overnight.",tag:"social",imp:0,asset:null,industry:"crypto",heat:3},
+    {t:"Penny stock chatter on Reddit r/wallstreetbets heating up.",tag:"social",imp:0,asset:null,industry:"penny",heat:2},
+  ];
+  seedPicks.forEach(p => {
+    const ev = {text:p.t,tag:p.tag,impact:p.imp,asset:null,industry:p.industry,heat:p.heat,source:"MARKET"};
+    addNews(ev, "");
+  });
+  // Pre-seed chat with NPC messages
+  const seedMsgs = [
+    {h:"💎 DiamondHands",t:"Mornin' apes. Pre-market is dead. Patience.",e:"💎",avatar:"💎"},
+    {h:"📈 PapaPump",t:"Family, today is the day. We hold strong.",e:"📈",avatar:"📈"},
+    {h:"🐋 WhaleAlert",t:"🐋 Quiet open. Big players waiting on data.",e:"🐋",avatar:"🐋"},
+    {h:"⚡ AlphaTrades",t:"Scans clean. Setting alerts. Will update.",e:"⚡",avatar:"⚡"},
+    {h:"🌶️ PaprikaTrade",t:"Smell that? Someone is loading up. Trust me.",e:"🌶️",avatar:"🌶️"},
+    {h:"🟢 CryptoKing",t:"Coffee ☕ + chart 📈 = profit 💰. Let's go.",e:"🟢",avatar:"🟢"},
+  ];
+  seedMsgs.forEach(m => addChatMsg(m, "bot"));
+  G.seedDone = true;
 }
 
 function initLevelAssets(){
@@ -1539,7 +1793,7 @@ function initLevelAssets(){
       shortQty:0,
       shortAvgCost:0,
     };
-    G.history[a.tk]=[{t:0,p:a.start}];
+    G.history[a.tk]=[{t:0,p:a.start,v:0}];
   });
 }
 
@@ -1552,14 +1806,65 @@ function enterPhase(phase){
   pill.className="phase-pill "+p.c;
   pill.textContent=p.t;
   document.getElementById("statPhase").textContent="Phase: "+p.t;
-  if(phase==="buy")G.timer=lvl.durBuy;
-  else if(phase==="pump")G.timer=lvl.durPump;
-  else if(phase==="dump")G.timer=lvl.durDump;
-  else G.timer=0;
+  if(phase==="buy"){
+    G.timer=lvl.durBuy;
+    if(G.gameTimeMin===undefined)G.gameTimeMin=OPEN_MIN;
+  } else if(phase==="pump"){
+    G.timer=lvl.durPump;
+  } else if(phase==="dump"){
+    G.timer=lvl.durDump;
+  } else {
+    G.timer=0;
+  }
   document.getElementById("statTarget").textContent="Target: +"+(lvl.target*100).toFixed(0)+"% net profit";
-  if(phase==="choose")G.timer=0;
+  if(phase==="choose"){
+    G.timer=0;
+    G.chooseAutoStart = 12; // seconds until auto-start
+  }
+  // Show/hide Start Day vs Order controls
+  setOrderUIForPhase(phase);
   setHud();
   renderInfluencers();
+}
+
+// Show a big "▶ Start Day" button in choose phase; normal order controls otherwise.
+function setOrderUIForPhase(phase){
+  const orderEntry = document.querySelector('.order-entry');
+  if(!orderEntry)return;
+  // Hide the standard controls during choose
+  const standard = orderEntry.querySelectorAll('.order-type-tabs, .order-grid, .order-preview, .order-buttons');
+  if(phase === "choose"){
+    standard.forEach(el => el.style.display = 'none');
+    let startDay = document.getElementById('startDayBtn');
+    if(!startDay){
+      startDay = document.createElement('button');
+      startDay.id = 'startDayBtn';
+      startDay.className = 'order-btn';
+      startDay.style.cssText = 'width:100%;padding:14px;font-size:14px;background:linear-gradient(135deg,var(--gold),var(--orange));color:#1a1000;border:none;border-radius:4px;cursor:pointer;font-weight:700;letter-spacing:.04em';
+      startDay.innerHTML = '▶  START DAY  <span style="font-size:10px;font-weight:500;opacity:.85;display:block;margin-top:2px">Open positions, begin trading</span>';
+      startDay.onclick = startDay;
+      orderEntry.appendChild(startDay);
+    }
+    startDay.style.display = 'block';
+  } else {
+    standard.forEach(el => el.style.display = '');
+    const startDay = document.getElementById('startDayBtn');
+    if(startDay) startDay.style.display = 'none';
+  }
+}
+
+function startDay(){
+  if(!G||G.phase!=="choose")return;
+  // If no asset selected, pick the highest-cap asset as default so player isn't stuck
+  if(!G.selected){
+    const def = Object.values(G.assets).sort((a,b)=>b.cap-a.cap)[0];
+    if(def) selectAsset(def.tk);
+  }
+  enterPhase("buy");
+  blip(660,.12,"triangle");
+  if(G.selected){
+    addNews({text:"🟢 Trading day opened. Accumulating " + G.selected + ".",tag:"bull",impact:0,asset:null,industry:null,heat:0},"sys");
+  }
 }
 
 let newsTickCounter = 0;
@@ -1569,7 +1874,7 @@ function startTicks(){
   TICK=setInterval(tick,1000);
   if(NEWS_TICK)clearInterval(NEWS_TICK);
   if(CHAT_TICK)clearInterval(CHAT_TICK);
-  CHAT_TICK=setInterval(tickChat,6000);
+  CHAT_TICK=setInterval(tickChat,4000);
   newsTickCounter = 0;
   chatTickCounter = 0;
 }
@@ -1579,13 +1884,13 @@ function tick(){
   G.tick++;
   G.newsCooldown=Math.max(0,G.newsCooldown-1);
   G.chatCooldown=Math.max(0,G.chatCooldown-1);
-  // Fire news every 30 ticks (30 seconds)
+  // Fire news: every 9-13s avg (was every 30s+60% chance = ~50s avg)
   newsTickCounter++;
-  if(newsTickCounter >= 30){
+  if(newsTickCounter >= 9){
     newsTickCounter = 0;
-    tickNews();
+    if(rng() < 0.85) tickNews();  // 85% chance to fire when window hits
   }
-  // Update all prices
+  // Update all prices (game-time: 1 tick = 1 game minute)
   Object.values(G.assets).forEach(a=>{
     a.prevPrice=a.price;
     const drift=(rng()-0.5)*a.vol*0.015;
@@ -1598,9 +1903,32 @@ function tick(){
     a.bid=a.price*(1-a.vol*0.28);
     a.ask=a.price*(1+a.vol*0.28);
     a.change=((a.price/a.prevPrice)-1)*100;
-    G.history[a.tk].push({t:G.tick,p:a.price});
+    // Volume = absolute price movement in this tick (proxy), scaled to share count
+    const dv = Math.abs(a.price - a.prevPrice);
+    const baseVol = (a.type === 'commodity' ? 50000 : 200000) * (1 + a.vol * 5);
+    const tickVol = Math.max(0, baseVol * (0.3 + rng() * 1.5) + dv * 1e7);
+    G.history[a.tk].push({t:G.tick,p:a.price,v:tickVol});
     if(G.history[a.tk].length>500)G.history[a.tk].shift();
   });
+  // Advance game clock (only when not in choose/end)
+  if(G.phase !== "choose" && G.phase !== "end"){
+    G.gameTimeMin = (G.gameTimeMin + 1) % (24*60);
+    // If we wrapped past 4 PM, freeze at close
+    if(G.gameTimeMin > CLOSE_MIN) G.gameTimeMin = CLOSE_MIN;
+  }
+  // Choose-phase auto-start countdown
+  if(G.phase === "choose" && G.chooseAutoStart > 0){
+    G.chooseAutoStart--;
+    if(G.chooseAutoStart === 0){
+      // Auto-start with the highest-cap asset if none picked
+      if(!G.selected){
+        const def = Object.values(G.assets).sort((a,b)=>b.cap-a.cap)[0];
+        if(def) selectAsset(def.tk);
+      }
+      enterPhase("buy");
+      addNews({text:"⏰ Bell rang. Trading day auto-started with " + (G.selected || "market") + ".",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
+    }
+  }
   // Natural heat decay (small amount each tick, unless actively pumping)
   if(G.heat > 0 && G.phase !== "pump"){
     G.heat = Math.max(0, G.heat - 0.3);
@@ -1625,6 +1953,8 @@ function tick(){
   renderWatchlist();
   renderBook();
   if(G.selected)drawChart(G.selected);
+  updateVolumeStrip();
+  updateLastPriceTag();
 }
 
 let newsCache=[];
@@ -1681,6 +2011,8 @@ function tickNews(){
   const realEv=getRealNews();
   if(realEv){
     addNews(realEv,"");
+    G.lastNewsTime = G.tick;
+    G.lastNewsAsset = realEv.asset;
     renderWatchlist();
     if(G.selected)drawChart(G.selected);
     return;
@@ -1689,26 +2021,60 @@ function tickNews(){
   const lvl=LEVELS[G.level-1];
   const avail=NEWS_TEMPLATES.filter(n=>n.industry&&(n.industry==="gold"||n.industry==="oil"?G.level>=4:true));
   if(avail.length===0)return;
-  if(rng()>.40)return; // 40% chance to post template news each tick
   const ev=pick(avail);
-  if(ev.asset){
-    const a=G.assets[ev.asset];
-    if(a){a.price*=1+ev.impact;a.bid=a.price*(1-a.vol*0.28);a.ask=a.price*(1+a.vol*0.28);a.change=ev.impact*100;a.hype=Math.min(100,a.hype+Math.abs(ev.impact)*50);}
+  // Replace $TK with a real asset matching the industry (or selected)
+  const matchList = Object.values(G.assets).filter(a => a.industry === ev.industry);
+  if(matchList.length === 0) return;
+  let target = null;
+  if(G.selected && G.assets[G.selected] && G.assets[G.selected].industry === ev.industry && rng() < 0.8){
+    target = G.assets[G.selected];
   } else {
-    Object.values(G.assets).forEach(a=>{
-      if(a.industry===ev.industry){
-        a.price*=1+ev.impact;
-        a.bid=a.price*(1-a.vol*0.28);
-        a.ask=a.price*(1+a.vol*0.28);
-        a.change=ev.impact*100;
-        a.hype=Math.min(100,a.hype+Math.abs(ev.impact)*30);
-      }
-    });
+    target = matchList[Math.floor(rng() * matchList.length)];
+  }
+  ev.text = ev.text.replace(/\$TK/g, target.tk);
+  ev.asset = target.tk;
+  // Apply price impact
+  const a = G.assets[ev.asset];
+  if(a){
+    a.price *= (1 + ev.impact);
+    a.bid = a.price * (1 - a.vol * 0.28);
+    a.ask = a.price * (1 + a.vol * 0.28);
+    a.change = ev.impact * 100;
+    a.hype = Math.min(100, a.hype + Math.abs(ev.impact) * 50);
   }
   G.heat=Math.min(100,G.heat+ev.heat);
+  G.lastNewsTime = G.tick;
+  G.lastNewsAsset = ev.asset;
   addNews(ev,"");
+  // Trigger NPC reaction to news (queued via small delay)
+  if(rng() < 0.7){
+    setTimeout(()=>npcReactToNews(target ? target.tk : null), 1500 + rng() * 2000);
+  }
   renderWatchlist();
   if(G.selected)drawChart(G.selected);
+}
+
+// NPC reacts to a news event (chat message)
+function npcReactToNews(assetTk){
+  if(!G||G.paused)return;
+  const eligible = NPC_POOL.filter(n => npcCanPost(n.id));
+  if(eligible.length === 0) return;
+  const npc = eligible[Math.floor(rng() * eligible.length)];
+  const asset = assetTk || G.selected || Object.keys(G.assets)[0];
+  const reactions = {
+    bull: ["Just saw the news. $TK is moving.", "This changes everything for $TK.", "Catalyst confirmed on $TK.", "$TK setup just got better.", "Bullish on $TK after this."],
+    bear: ["Heads up. $TK looks toppy.", "Don't chase $TK here.", "Smart money selling $TK.", "$TK news is priced in.", "Trim $TK into strength."],
+    gov:  ["Regulators circling $TK. Be careful.", "$TK in the crosshairs.", "Compliance risk rising on $TK.", "Watch the heat on $TK."],
+    social:["Twitter blowing up on $TK.", "Sentiment shift on $TK.", "Retail piling into $TK.", "$TK trending."],
+    ev:   ["$TK catalyst could be huge.", "Read the $TK press release. Game-changer.", "$TK announcement is significant."],
+    crypto:["On-chain data on $TK is wild.", "Whales accumulating $TK.", "$TK volume spiking."],
+    neutral:["$TK news just dropped. Watching.", "Interesting development on $TK.", "Reading more on $TK."]
+  };
+  const tag = (npc.bias === "bull" ? "bull" : npc.bias === "bear" ? "bear" : "neutral");
+  const pool = reactions[tag] || reactions.neutral;
+  const text = pool[Math.floor(rng() * pool.length)].replace(/\$TK/g, asset);
+  addChatMsg({h: npc.name, t: text, e: npc.followerCount, avatar: npc.avatar}, "bot");
+  npcLastPost[npc.id] = G.tick;
 }
 
 function tickChat(){
@@ -1769,6 +2135,10 @@ function placeBuy(){
   if(price<=0)price=a.ask;
   const cost=qty*price;
   if(cost>G.cash){addNews({text:"💸 Insufficient cash. Need "+fmt(cost,2)+", have "+fmt(G.cash,2)+".",tag:"bear",impact:0,asset:null,industry:null,heat:0},"sys");return;}
+  // Auto-start the day on first buy in choose phase
+  if(G.phase==="choose"){
+    enterPhase("buy");
+  }
   G.cash-=cost;
   a.owned+=qty;
   a.avgCost=((a.avgCost*(a.owned-qty))+cost)/a.owned;
@@ -1777,7 +2147,41 @@ function placeBuy(){
   blip(220,.1,"square");
   setHud();
   renderPositions();
+  // NPC reaction to buy
+  if(rng() < 0.35 && G.phase !== "end"){
+    setTimeout(()=>npcReactToTrade("buy", G.selected, qty, price), 800 + rng()*1500);
+  }
   if(G.phase==="buy"&&G.cash<10)setTimeout(()=>enterPhase("pump"),500);
+}
+
+function npcReactToTrade(side, asset, qty, price){
+  if(!G||!G.paused)return;
+  const eligible = NPC_POOL.filter(n => npcCanPost(n.id));
+  if(eligible.length === 0) return;
+  const npc = eligible[Math.floor(rng() * eligible.length)];
+  const reactions = side === "buy" ? [
+    "Someone's loading $TK. Big buyer spotted.",
+    "Buying pressure on $TK increasing.",
+    "Tape doesn't lie. $TK is being accumulated.",
+    "Smart money accumulating $TK. This is the move.",
+    "Told you. $TK is where the flow is.",
+  ] : side === "sell" ? [
+    "Distribution happening on $TK. Be careful.",
+    "Selling pressure on $TK. Trim your risk.",
+    "$TK hitting supply. Could be a top.",
+    "Big seller hit the bid on $TK. Stay alert.",
+    "Profit-taking on $TK. Healthy or warning sign?",
+  ] : side === "short" ? [
+    "Short interest rising on $TK. Squeeze risk noted.",
+    "Bears piling into $TK. The setup is getting crowded.",
+    "$TK short float spiking. Watch for a squeeze.",
+  ] : side === "cover" ? [
+    "Shorts covering on $TK. Bullish signal.",
+    "$TK squeeze forming. Covering now.",
+  ] : ["$TK tape is interesting right now."];
+  const text = reactions[Math.floor(rng() * reactions.length)].replace(/\$TK/g, asset);
+  addChatMsg({h: npc.name, t: text, e: npc.followerCount, avatar: npc.avatar}, "bot");
+  npcLastPost[npc.id] = G.tick;
 }
 function placeShort(){
   if(!G||!G.selected||G.phase==="end")return;
@@ -1787,6 +2191,8 @@ function placeShort(){
   let price=G.otType==="market"?a.bid:parseFloat(document.getElementById("ordPrice").value)||a.bid;
   if(price<=0)price=a.bid;
   const proceeds=qty*price;
+  // Auto-start the day on first trade in choose phase
+  if(G.phase==="choose") enterPhase("buy");
   // Short: receive cash, owe the asset. Cost to cover = qty * price now.
   G.cash+=proceeds;
   a.shortQty+=qty;
@@ -1797,14 +2203,20 @@ function placeShort(){
   setHud();
   renderPositions();
   updateOrderButtons();
+  if(rng() < 0.35 && G.phase !== "end"){
+    setTimeout(()=>npcReactToTrade("short", G.selected, qty, price), 800 + rng()*1500);
+  }
 }
 function placeSell(){
   if(!G||!G.selected||G.phase==="end")return;
   const a=G.assets[G.selected];
   const qty=parseInt(document.getElementById("ordQty").value)||0;
   if(qty<=0)return;
+  if(G.phase==="choose") enterPhase("buy");
+  let side = "sell";
   if(a.shortQty>0){
     // Cover short position
+    side = "cover";
     const coverQty=Math.min(qty,a.shortQty);
     let price=G.otType==="market"?a.bid:parseFloat(document.getElementById("ordPrice").value)||a.bid;
     if(price<=0)price=a.bid;
@@ -1833,10 +2245,15 @@ function placeSell(){
     if(pnl>0)G.wins++;
     addNews({text:"🔴 Sold "+sqty+" "+a.tk+" @ "+fmt(price,4)+". P/L: "+(pnl>=0?"+":"")+fmt(pnl,2)+".",tag:pnl>=0?"bull":"bear",impact:0,asset:null,industry:null,heat:0},"you");
     blip(440,.1,"sawtooth");
+  } else {
+    return; // nothing to sell
   }
   setHud();
   renderPositions();
   updateOrderButtons();
+  if(rng() < 0.35 && G.phase !== "end"){
+    setTimeout(()=>npcReactToTrade(side, G.selected, qty, 0), 800 + rng()*1500);
+  }
 }
 
 // ---- POSTS ----
@@ -1913,14 +2330,16 @@ function buildWatchlist(){
     const el=document.createElement("div");
     el.className="watchlist-item";
     el.id="wl-"+a.tk;
+    el.dataset.type=a.type;
+    const ch = sessionChangePct(a);
     el.innerHTML=`
       <div>
         <div class="tk">${a.tk}</div>
         <div class="nm">${a.nm}</div>
       </div>
       <div class="price-col">
-        <div class="pr ${a.change>=0?"up":"dn"}">${fmt(a.price,a.price<1?4:2)}</div>
-        <div class="ch ${a.change>=0?"up":a.change<0?"dn":"ne"}">${fmtPct(a.change)}</div>
+        <div class="pr ${ch>=0?"up":"dn"}">${fmt(a.price,a.price<1?4:2)}</div>
+        <div class="ch ${ch>=0?"up":ch<0?"dn":"ne"}">${fmtPct(ch)}</div>
         <div class="mkt">${a.type==="commodity"?fmt(a.cap,0):fmt(a.cap*1e9,1)+" cap"}</div>
       </div>
     `;
@@ -1934,47 +2353,41 @@ function renderWatchlist(){
     if(!el)return;
     el.className="watchlist-item"+(G.selected===a.tk?" active":"");
     el.querySelector(".pr").textContent=fmt(a.price,a.price<1?4:2);
-    el.querySelector(".pr").className="pr "+(a.change>=0?"up":"dn");
+    const ch = sessionChangePct(a);
+    el.querySelector(".pr").className="pr "+(ch>=0?"up":"dn");
     const chEl=el.querySelector(".ch");
-    chEl.textContent=fmtPct(a.change);
-    chEl.className="ch "+(a.change>=0?"up":a.change<0?"dn":"ne");
+    chEl.textContent=fmtPct(ch);
+    chEl.className="ch "+(ch>=0?"up":ch<0?"dn":"ne");
   });
 }
 function filterWatch(f){
-  document.querySelectorAll(".col-header .tab").forEach(t=>t.classList.remove("active"));
-  event.target.classList.add("active");
-  const body=document.getElementById("watchlistBody");
-  body.innerHTML="";
-  Object.values(G.assets).forEach(a=>{
-    if(f!=="all"&&a.type!==f&&(f==="stock"?a.type!=="stock":f===f))return;
-    const el=document.createElement("div");
-    el.className="watchlist-item"+(G.selected===a.tk?" active":"");
-    el.id="wl-"+a.tk;
-    el.innerHTML=`
-      <div>
-        <div class="tk">${a.tk}</div>
-        <div class="nm">${a.nm}</div>
-      </div>
-      <div class="price-col">
-        <div class="pr ${a.change>=0?"up":"dn"}">${fmt(a.price,a.price<1?4:2)}</div>
-        <div class="ch ${a.change>=0?"up":a.change<0?"dn":"ne"}">${fmtPct(a.change)}</div>
-        <div class="mkt">${a.type==="commodity"?fmt(a.cap,0):fmt(a.cap*1e9,1)+" cap"}</div>
-      </div>
-    `;
-    el.onclick=()=>selectAsset(a.tk);
-    body.appendChild(el);
+  document.querySelectorAll(".col-watch .col-header .tab").forEach(t=>t.classList.remove("active"));
+  if(event && event.target) event.target.classList.add("active");
+  // Show/hide existing items rather than rebuild (faster + preserves event handlers)
+  const items = document.querySelectorAll("#watchlistBody .watchlist-item");
+  items.forEach(el => {
+    const t = el.dataset.type;
+    let show = true;
+    if(f === "stock") show = (t === "stock");
+    else if(f === "coin") show = (t === "coin");
+    else if(f === "commodity") show = (t === "commodity");
+    el.style.display = show ? "" : "none";
   });
 }
 function selectAsset(tk){
   G.selected=tk;
   const a=G.assets[tk];
   document.getElementById("chartSym").textContent=a.tk;
-  document.getElementById("chartName").textContent=a.nm;
+  const nameEl = document.getElementById("chartName");
+  nameEl.textContent = a.nm;
+  delete nameEl.dataset.baseName;
   document.getElementById("ordPrice").value=a.price.toFixed(a.price<1?5:2);
   updateOrdPreview();
   renderWatchlist();
   renderBook();
   drawChart(tk);
+  updateVolumeStrip();
+  updateLastPriceTag();
   blip(440,.05,"sine");
   updateOrderButtons();
 }
@@ -1984,7 +2397,7 @@ let ovlMode="price";
 function setOvls(m){
   ovlMode=m;
   document.querySelectorAll(".ovl-btn").forEach(b=>b.classList.remove("active"));
-  event.target.classList.add("active");
+  if(event && event.target) event.target.classList.add("active");
   if(G.selected)drawChart(G.selected);
 }
 function drawChart(tk){
@@ -2000,35 +2413,61 @@ function drawChart(tk){
   ctx.clearRect(0,0,w,h);
   const hist=G.history[tk];
   if(!hist||hist.length<2)return;
-  const padL=52,padR=6,padT=6,padB=20;
+  // Chart x-axis covers the full trading day (9:30 AM = 0, 4:00 PM = 390 min)
+  // so time-axis labels are stable. Data fills from left as the day progresses.
+  const padL=52,padR=56,padT=6,padB=70;
+  const FULL_DAY_MIN = CLOSE_MIN - OPEN_MIN;  // 390
   const prices=hist.map(h=>h.p);
   const min=Math.min(...prices)*0.998;
   const max=Math.max(...prices)*1.002;
   const range=max-min||1;
   const yF=p=>padT+(1-(p-min)/range)*(h-padT-padB);
-  const xF=(i)=>padL+(i/(hist.length-1))*(w-padL-padR);
-  // grid
-  ctx.strokeStyle="rgba(255,255,255,0.04)";ctx.lineWidth=1;
-  for(let i=0;i<4;i++){const y=padT+i*(h-padT-padB)/3;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();}
+  // Map history index to x position based on FULL_DAY_MIN fixed scale
+  const xF=(i)=>padL+(i/FULL_DAY_MIN)*(w-padL-padR);
+  // grid (horizontal lines on price area only)
+  ctx.strokeStyle="rgba(255,255,255,0.05)";ctx.lineWidth=1;
+  for(let i=0;i<5;i++){const y=padT+i*(h-padT-padB)/4;ctx.beginPath();ctx.moveTo(padL,y);ctx.lineTo(w-padR,y);ctx.stroke();}
+  // y-axis price labels (left side)
   ctx.fillStyle="#4a5a72";ctx.font="9px JetBrains Mono,monospace";
-  for(let i=0;i<=3;i++){const v=max-i*(range/3);const y=padT+i*(h-padT-padB)/3+3;ctx.fillText(fmt(v,a.price<1?4:2),3,y);}
-  // price line
+  for(let i=0;i<=4;i++){const v=max-i*(range/4);const y=padT+i*(h-padT-padB)/4+3;ctx.fillText(fmt(v,a.price<1?4:2),3,y);}
+  // Right-side: last price tag (drawn as filled rectangle on right edge)
   const up=hist[hist.length-1].p>=hist[0].p;
+  const lastY = yF(hist[hist.length-1].p);
+  ctx.fillStyle = up ? "#00c97a" : "#e83a58";
+  ctx.fillRect(w-padR+4, lastY-8, padR-8, 16);
+  ctx.fillStyle = up ? "#042818" : "#fff";
+  ctx.font = "bold 9px JetBrains Mono, monospace";
+  const tagTxt = fmt(a.price, a.price<1?4:2);
+  ctx.textAlign = "center";
+  ctx.fillText(tagTxt, w-padR/2, lastY+3);
+  ctx.textAlign = "left";
+  // price line
   ctx.strokeStyle=up?"#00c97a":"#e83a58";ctx.lineWidth=1.5;
   ctx.beginPath();hist.forEach((pt,i)=>{const x=xF(i),y=yF(pt.p);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});ctx.stroke();
   // fill
-  const grd=ctx.createLinearGradient(0,0,0,h);
+  const grd=ctx.createLinearGradient(0,0,0,h-padB);
   grd.addColorStop(0,up?"rgba(0,201,122,.2)":"rgba(232,58,88,.2)");grd.addColorStop(1,"rgba(0,0,0,0)");
   ctx.fillStyle=grd;
   ctx.lineTo(xF(hist.length-1),h-padB);ctx.lineTo(padL,h-padB);ctx.closePath();ctx.fill();
-  // volume bars (if ovlMode==volume)
+  // volume bars overlay (drawn directly on canvas below price area when overlay is volume)
   if(ovlMode==="volume"){
-    const maxV=Math.max(...hist.map((_,i)=>i>0?Math.abs(hist[i].p-hist[i-1].p):1));
-    hist.forEach((pt,i)=>{if(i===0)return;const dv=Math.abs(pt.p-hist[i-1].p)/maxV;const x=xF(i);const bh=(h-padT-padB)*dv;ctx.fillStyle="rgba(58,142,245,.2)";ctx.fillRect(x-1,h-padB-bh,2,bh);});
+    const vols = hist.map(h=>h.v||0);
+    const maxV = Math.max(...vols) || 1;
+    const volAreaH = 50;
+    const volTop = h - padB + 20;
+    hist.forEach((pt,i)=>{
+      const v = pt.v || 0;
+      const bh = (v/maxV) * volAreaH;
+      const x = xF(i);
+      const prev = i>0 ? hist[i-1].p : pt.p;
+      const upbar = pt.p >= prev;
+      ctx.fillStyle = upbar ? "rgba(0,201,122,.55)" : "rgba(232,58,88,.55)";
+      ctx.fillRect(x-0.5, volTop + volAreaH - bh, 1.5, bh);
+    });
   }
   // heat line (if ovlMode==heat)
   if(ovlMode==="heat"){
-    ctx.strokeStyle="rgba(240,180,41,.5)";ctx.lineWidth=1;ctx.setLineDash([3,3]);
+    ctx.strokeStyle="rgba(240,180,41,.6)";ctx.lineWidth=1;ctx.setLineDash([3,3]);
     const hy=(a.hype/100)*(h-padT-padB);
     ctx.beginPath();ctx.moveTo(padL,h-padB-hy);ctx.lineTo(w-padR,h-padB-hy);ctx.stroke();
     ctx.setLineDash([]);
@@ -2036,10 +2475,22 @@ function drawChart(tk){
   // avg cost line
   if(a.owned>0&&a.avgCost>0){
     const yc=yF(a.avgCost);
-    ctx.strokeStyle="rgba(240,180,41,.6)";ctx.setLineDash([4,3]);ctx.lineWidth=1;
+    ctx.strokeStyle="rgba(240,180,41,.7)";ctx.setLineDash([4,3]);ctx.lineWidth=1;
     ctx.beginPath();ctx.moveTo(padL,yc);ctx.lineTo(w-padR,yc);ctx.stroke();ctx.setLineDash([]);
-    ctx.fillStyle="#f0b429";ctx.fillText("avg "+fmt(a.avgCost,a.price<1?4:2),Math.max(padL,w-90),yc-3);
+    ctx.fillStyle="#f0b429";ctx.font="9px JetBrains Mono, monospace";
+    ctx.fillText("avg "+fmt(a.avgCost,a.price<1?4:2),Math.max(padL,w-140),yc-3);
   }
+  // Draw a vertical "now" line at the rightmost data point
+  ctx.strokeStyle = "rgba(255,255,255,0.18)";
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2,2]);
+  ctx.beginPath();
+  ctx.moveTo(xF(hist.length-1), padT);
+  ctx.lineTo(xF(hist.length-1), h-padB);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  // Update the time-axis labels (positioned absolutely to match game minutes)
+  updateTimeAxis();
   // indicators
   const o=hist[0].p,hP=Math.max(...prices),lP=Math.min(...prices);
   const vol=hist.slice(-20).reduce((s,_,i,a)=>i>0?s+Math.abs(a[i].p-a[i-1].p):s,0);
@@ -2059,6 +2510,147 @@ function drawChart(tk){
   const ccEl=document.getElementById("chartChange");
   ccEl.textContent=(pct>=0?"+":"")+fmt(a.price-a.start,a.price<1?4:2)+" ("+fmtPct(pct)+")";
   ccEl.className="chart-change-big "+(pct>=0?"up":"dn");
+  // Append a date subtitle below the name (chart-name is shared with watchlist name)
+  const nameEl = document.getElementById("chartName");
+  if(nameEl && G.gameTimeMin !== undefined){
+    const dateStr = formatGameDate(G.gameDateOffset || 0);
+    // If the name text doesn't include the date, capture the bare name and add the date
+    if(!nameEl.textContent.includes("•")){
+      nameEl.dataset.baseName = nameEl.textContent;
+      nameEl.textContent = nameEl.dataset.baseName + "  •  " + dateStr;
+    } else {
+      // Name already has date; just refresh the date in case the day rolled over
+      nameEl.textContent = (nameEl.dataset.baseName || a.nm) + "  •  " + dateStr;
+    }
+  }
+}
+
+function updateTimeAxis(){
+  const ax = document.getElementById("timeAxis");
+  if(!ax) return;
+  const FULL_DAY_MIN = CLOSE_MIN - OPEN_MIN;  // 390
+  // Hours: 9:30, 10:30, 11:30, 12:30, 1:30, 2:30, 3:30, 4:00
+  const labels = [
+    {m:0, t:"9:30a"},
+    {m:60, t:"10:30a"},
+    {m:120, t:"11:30a"},
+    {m:180, t:"12:30p"},
+    {m:240, t:"1:30p"},
+    {m:300, t:"2:30p"},
+    {m:360, t:"3:30p"},
+    {m:390, t:"4p"},
+  ];
+  let html = "";
+  labels.forEach((l, idx) => {
+    const pct = (l.m / FULL_DAY_MIN) * 100;
+    // For first label, anchor left; for last, anchor right; otherwise center
+    let style = "left:" + pct + "%";
+    if(idx === 0) style += ";transform:translateX(0)";
+    else if(idx === labels.length-1) style += ";transform:translateX(-100%)";
+    else style += ";transform:translateX(-50%)";
+    html += `<span style="${style}">${l.t}</span>`;
+  });
+  ax.innerHTML = html;
+}
+
+// ---- VOLUME STRIP (HTML elements) ----
+function updateVolumeStrip(){
+  if(!G||!G.selected)return;
+  const strip = document.getElementById("volStrip");
+  if(!strip) return;
+  const hist = G.history[G.selected];
+  if(!hist || hist.length === 0){ strip.innerHTML = ""; return; }
+  // Show bars at positions matching the chart's full-day x-axis
+  // (each index i occupies the x-range [i-0.5, i+0.5] minutes, scaled to strip width)
+  const FULL_DAY_MIN = CLOSE_MIN - OPEN_MIN;  // 390
+  const maxV = Math.max(...hist.map(p=>p.v||0)) || 1;
+  let html = "";
+  for(let i = 0; i < hist.length; i++){
+    const pt = hist[i];
+    const prev = i>0 ? hist[i-1].p : pt.p;
+    const cls = pt.p >= prev ? "up" : "dn";
+    const h = Math.max(2, Math.round((pt.v||0)/maxV * 50));
+    // left position as percentage of full day
+    const leftPct = (i / FULL_DAY_MIN) * 100;
+    const widthPct = (1 / FULL_DAY_MIN) * 100 * 0.7; // slightly narrower than 1-min slot
+    html += `<div class="vol-bar ${cls}" style="position:absolute;left:${leftPct}%;width:${widthPct}%;height:${h}px;bottom:0"></div>`;
+  }
+  strip.innerHTML = html;
+}
+
+function updateLastPriceTag(){
+  if(!G||!G.selected)return;
+  const tag = document.getElementById("lastTag");
+  if(!tag) return;
+  const a = G.assets[G.selected];
+  if(!a){ tag.style.display = "none"; return; }
+  const ch = sessionChangePct(a);
+  tag.style.display = "block";
+  tag.textContent = fmt(a.price, a.price<1?4:2);
+  tag.className = "last-tag" + (ch < 0 ? " dn" : "");
+}
+
+// ---- CHART CROSSHAIR + TOOLTIP ----
+function attachChartMouseHandlers(){
+  const wrap = document.getElementById("chartWrap");
+  if(!wrap) return;
+  const canvas = document.getElementById("mainChart");
+  const tooltip = document.getElementById("chartTooltip");
+  const crossV = document.getElementById("crossV");
+  const crossH = document.getElementById("crossH");
+  if(!canvas || wrap._handlersAttached) return;
+  wrap._handlersAttached = true;
+  function onMove(e){
+    if(!G||!G.selected){ return; }
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const hist = G.history[G.selected];
+    if(!hist || hist.length < 2) return;
+    const padL=52,padR=56;
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    if(x < padL || x > w - padR){ onLeave(); return; }
+    // Map x to game minutes (chart spans 0..FULL_DAY_MIN)
+    const FULL_DAY_MIN = CLOSE_MIN - OPEN_MIN;
+    const minF = (x - padL) / (w - padL - padR) * FULL_DAY_MIN;
+    const idx = Math.max(0, Math.min(hist.length-1, Math.round(minF)));
+    const pt = hist[idx];
+    // Time at this index = (OPEN_MIN + idx) game minutes
+    const tMin = OPEN_MIN + idx;
+    const tStr = formatClockShort(tMin);
+    // Show crosshair lines
+    crossV.style.display = "block";
+    crossV.style.left = x + "px";
+    crossH.style.display = "block";
+    crossH.style.top = y + "px";
+    // Show tooltip
+    const chg = ((pt.p / G.assets[G.selected].start) - 1) * 100;
+    document.getElementById("ttTime").textContent = tStr;
+    document.getElementById("ttPrice").textContent = fmt(pt.p, G.assets[G.selected].price<1?4:2);
+    const chgEl = document.getElementById("ttChg");
+    chgEl.textContent = (chg>=0?"+":"") + fmtPct(chg) + " from open";
+    chgEl.style.color = chg>=0 ? "var(--green)" : "var(--red)";
+    tooltip.style.display = "block";
+    // Keep tooltip on screen
+    if(x > w - 200){
+      tooltip.style.left = (x - 160) + "px";
+    } else {
+      tooltip.style.left = (x + 12) + "px";
+    }
+    if(y > h - 80){
+      tooltip.style.top = (y - 60) + "px";
+    } else {
+      tooltip.style.top = (y + 12) + "px";
+    }
+  }
+  function onLeave(){
+    crossV.style.display = "none";
+    crossH.style.display = "none";
+    tooltip.style.display = "none";
+  }
+  canvas.addEventListener("mousemove", onMove);
+  canvas.addEventListener("mouseleave", onLeave);
+  wrap.addEventListener("mouseleave", onLeave);
 }
 
 // ---- RENDER: ORDER BOOK ----
@@ -2089,18 +2681,30 @@ function buildNews(){
 function addNews(ev,who){
   const body=document.getElementById("newsBody");
   const el=document.createElement("div");
-  el.className="news-item"+(who==="sys"?" special":"");
+  el.className="news-item"+(who==="sys"?" special":"")+" flash-news";
   const txt=ev.text.replace(/\$TK/g,`<span class="tk">${G?.selected||"$TK"}</span>`);
+  // Use in-game time for the timestamp if available
+  const ts = G ? formatClockShort(G.gameTimeMin) : new Date().toLocaleTimeString();
   el.innerHTML=`
     <div class="meta">
       <span class="tag ${ev.tag}">${ev.tag.toUpperCase()}</span>
       <span>${who||"NEWS"}</span>
-      <span>· ${new Date().toLocaleTimeString()}</span>
+      <span>· ${ts}</span>
     </div>
     <div class="body">${esc(txt)}</div>
   `;
   body.insertBefore(el,body.firstChild);
   if(body.children.length>80)body.removeChild(body.lastChild);
+  // Update badge count
+  if(G){
+    G.newsCount = (G.newsCount || 0) + 1;
+    const badge = document.getElementById("newsBadge");
+    if(badge){
+      badge.setAttribute("data-count", G.newsCount > 99 ? "99+" : String(G.newsCount));
+    }
+  }
+  // Soft audio cue
+  try{ blip(880, 0.04, "sine", 0.015); }catch(e){}
 }
 
 // ---- RENDER: CHAT ----
@@ -2110,11 +2714,15 @@ function buildChat(){
 function addChatMsg(m,who){
   const body=document.getElementById("chatBody");
   const el=document.createElement("div");
-  el.className="chat-msg "+who;
+  el.className="chat-msg "+who+" flash-chat";
   const avatar= m.avatar||(m.e||"");
-  el.innerHTML=`<span class="avatar">${avatar}</span><span class="handle">${esc(m.h)}</span><span class="ts">${new Date().toLocaleTimeString()}</span><div class="txt">${esc(m.t)}</div>`;
+  const ts = G ? formatClockShort(G.gameTimeMin) : new Date().toLocaleTimeString();
+  el.innerHTML=`<span class="avatar">${avatar}</span><span class="handle">${esc(m.h)}</span><span class="ts">${ts}</span><div class="txt">${esc(m.t)}</div>`;
   body.insertBefore(el,body.firstChild);
   if(body.children.length>60)body.removeChild(body.lastChild);
+  if(G){
+    G.chatCount = (G.chatCount || 0) + 1;
+  }
 }
 function placeBuyToClose(){
   if(!G||!G.selected||G.phase==="end")return;
@@ -2248,19 +2856,38 @@ function setHud(){
   document.getElementById("hudCash").textContent=fmt(G.cash,0);
   document.getElementById("hudNet").textContent=fmt(netWorth,0);
   document.getElementById("hudUpnl").textContent=(upnl>=0?"+":"")+fmt(upnl,0);
-  document.getElementById("hudBuying").textContent=fmt(G.cash,0);
-  document.getElementById("hudAvailable").textContent=fmt(G.cash,0);
   document.getElementById("hudUpnl").className="val "+(upnl>=0?"g":"r");
   document.getElementById("hudHeat").textContent=G.heat.toFixed(0)+"%";
   document.getElementById("hudHeat").style.color=G.heat>60?"var(--red)":G.heat>30?"var(--orange)":"var(--orange)";
   document.getElementById("hudTarget").textContent="+"+(lvl.target*100).toFixed(0)+"%";
   document.getElementById("lvlBadge").textContent="LVL "+G.level;
   document.getElementById("lvlName").textContent=lvl.name;
+  // ---- Clock + date ----
+  if(G.gameTimeMin === undefined) G.gameTimeMin = OPEN_MIN;
+  document.getElementById("clockTime").textContent = formatClock(G.gameTimeMin);
+  document.getElementById("clockDate").textContent = formatGameDate(G.gameDateOffset || 0);
+  const sess = getSessionForTime(G.gameTimeMin);
+  const cs = document.getElementById("clockSession");
+  cs.textContent = sess.label;
+  cs.className = "clock-session " + sess.cls;
+  // session strip
+  const ss = document.getElementById("ssStatus");
+  if(ss) ss.textContent = sess.label === "OPEN" ? "MARKET OPEN — TRADING LIVE" : (sess.label === "PRE" ? "PRE-MARKET" : (sess.label === "CLOSED" ? "MARKET CLOSED" : "AFTER-HOURS"));
+  const ssDot = document.getElementById("ssDot");
+  if(ssDot) ssDot.className = "ss-dot" + (sess.label === "OPEN" ? " live" : "");
+  const ssNext = document.getElementById("ssNext");
+  if(ssNext){
+    if(G.phase === "choose") ssNext.textContent = "Day start";
+    else if(G.phase === "buy") ssNext.textContent = "Pump phase";
+    else if(G.phase === "pump") ssNext.textContent = "Exit window";
+    else if(G.phase === "dump") ssNext.textContent = "Market close";
+    else ssNext.textContent = "—";
+  }
   // timer
   const fill=document.getElementById("timerFill");
   if(G.phase==="choose"){
     fill.style.width="100%";fill.className="timer-fill";
-    document.getElementById("timerLabel").textContent="—";
+    document.getElementById("timerLabel").textContent = G.chooseAutoStart > 0 ? (G.chooseAutoStart + "s") : "—";
   } else {
     const dur=G.phase==="buy"?lvl.durBuy:G.phase==="pump"?lvl.durPump:lvl.durDump;
     const pct=Math.max(0,G.timer/dur*100);
@@ -2347,9 +2974,15 @@ function replayLevel(){
   Object.values(G.assets).forEach(a=>{a.owned=0;a.avgCost=0;a.shortQty=0;a.shortAvgCost=0;a.hype=0;a.heat=0;});
   G.heat=0;G.hired=new Set();G.hiredTime={};
   G.dayPnl=0;G.bankruptcyReason="";
+  G.gameTimeMin = OPEN_MIN;
+  G.gameDateOffset = 0;
+  G.newsCount = 0; G.chatCount = 0;
+  const nb = document.getElementById("newsBadge"); if(nb) nb.setAttribute("data-count", "0");
   G.selected=null;
   document.getElementById("chartSym").textContent="—";
-  document.getElementById("chartName").textContent="Select an asset";
+  const nameEl = document.getElementById("chartName");
+  nameEl.textContent="Select an asset";
+  delete nameEl.dataset.baseName;
   buildWatchlist();buildNews();buildChat();renderPositions();
   enterPhase("choose");
   addNews({text:"━━━ Level "+G.level+" — "+LEVELS[G.level-1].name+" ━━━  Bankroll: "+fmt(G.cash,0)+"  Target: +"+(LEVELS[G.level-1].target*100).toFixed(0)+"%",tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
@@ -2365,10 +2998,16 @@ function nextLevel(){
   G.cash=Math.min(G.cash,lvl.cash);
   G.dayPnl=0;G.heat=0;G.hired=new Set();G.hiredTime={};
   G.bankruptcyReason="";
+  G.gameTimeMin = OPEN_MIN;
+  G.gameDateOffset = (G.gameDateOffset || 0) + 1;
+  G.newsCount = 0; G.chatCount = 0;
+  const nb = document.getElementById("newsBadge"); if(nb) nb.setAttribute("data-count", "0");
   initLevelAssets();
   G.selected=null;
   document.getElementById("chartSym").textContent="—";
-  document.getElementById("chartName").textContent="Select an asset";
+  const nameEl = document.getElementById("chartName");
+  nameEl.textContent="Select an asset";
+  delete nameEl.dataset.baseName;
   buildWatchlist();buildNews();buildChat();renderPositions();
   enterPhase("choose");
   addNews({text:`━━━ Level ${G.level}: ${lvl.name} ━━━  Bankroll: ${fmt(lvl.cash,0)}  Target: +${(lvl.target*100).toFixed(0)}%`,tag:"gov",impact:0,asset:null,industry:null,heat:0},"sys");
@@ -2396,7 +3035,7 @@ function endGame(v,reason){
 }
 
 // ---- CHART RESIZE ----
-window.addEventListener("resize",()=>{if(G&&G.selected)drawChart(G.selected)});
+window.addEventListener("resize",()=>{if(G&&G.selected){drawChart(G.selected);updateVolumeStrip();}});
 window.addEventListener("load",()=>{
   // size chart canvas
   const canvas=document.getElementById("mainChart");
@@ -2405,6 +3044,7 @@ window.addEventListener("load",()=>{
     canvas.width=wrap.clientWidth*window.devicePixelRatio;
     canvas.height=wrap.clientHeight*window.devicePixelRatio;
   }
+  attachChartMouseHandlers();
 });
 
 // ---- GOOGLE ADSENSE ----
